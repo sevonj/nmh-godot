@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3 uid="uid://dhnoeivicklod"]
+
+[ext_resource type="Script" path="res://classes/dragdrop.gd" id="1_q4bld"]
+[ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="2_vqvqo"]
+[ext_resource type="Theme" uid="uid://ibxsykxvwtee" path="res://ui/theme_default.tres" id="3_kqa80"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a1g8l"]
+bg_color = Color(0, 0, 0, 0.498039)
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_q4bld")
+
+[node name="env" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Node3D" parent="."]
+script = ExtResource("2_vqvqo")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="CSGBox3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.192072, 0)
+
+[node name="Control" type="PanelContainer" parent="."]
+offset_right = 248.0
+offset_bottom = 18.0
+theme = ExtResource("3_kqa80")
+theme_override_styles/panel = SubResource("StyleBoxFlat_a1g8l")
+
+[node name="Label" type="Label" parent="Control"]
+layout_mode = 2
+text = "Drop GMF2 files to this window."

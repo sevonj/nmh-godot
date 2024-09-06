@@ -1,0 +1,13 @@
+# Copytighted files
+gamedata/
+# Build
+build/
+*.so
+*.os
+.sconsign.dblite
+
+
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,6 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://ibxsykxvwtee"]
+
+[ext_resource type="FontFile" uid="uid://dgkxdkj81e3xp" path="res://assets/font/inconsolata/Inconsolata-Regular.ttf" id="1_lu8v8"]
+
+[resource]
+default_font = ExtResource("1_lu8v8")
