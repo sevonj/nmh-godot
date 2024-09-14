@@ -4,6 +4,7 @@ gamedata/
 build/
 *.so
 *.os
+*.dll
 .sconsign.dblite
 
 
