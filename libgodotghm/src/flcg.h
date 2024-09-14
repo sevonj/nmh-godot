@@ -5,10 +5,12 @@
 #ifndef NMH_FLCG_H
 #define NMH_FLCG_H
 
+#include <fstream>
 #include <godot_cpp/classes/array_mesh.hpp>
-#include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+
+#include "util_swap_endian.h"
 
 namespace godot {
 
@@ -35,6 +37,20 @@ class FLCG : public Node3D {
     uint32_t off_models;     // After materials?
     uint32_t off_materials;  // 0x40?
     int32_t unkwnown;        //
+
+    static FLCGHeader read(std::ifstream& file) {
+      FLCGHeader self;
+      file.read(reinterpret_cast<char*>(&self), sizeof(FLCGHeader));
+      // magic not swapped!
+      // version not swapped!
+      self.unused = swap_endian<int32_t>(self.unused);
+      self.num_models = swap_endian<uint16_t>(self.num_models);
+      self.num_materials = swap_endian<uint16_t>(self.num_materials);
+      self.off_models = swap_endian<uint32_t>(self.off_models);
+      self.off_materials = swap_endian<uint32_t>(self.off_materials);
+      self.unkwnown = swap_endian<int32_t>(self.unkwnown);
+      return self;
+    }
   };
 
   // --- Models --- //
@@ -53,6 +69,26 @@ class FLCG : public Node3D {
     float unkf_0x30;      //
     int32_t unused_0x34;  // Always 0
     int32_t off_data;     //
+
+    // Read from file
+    static FLCGModel read(std::ifstream& file) {
+      FLCGModel self;
+      file.read(reinterpret_cast<char*>(&self), sizeof(FLCGModel));
+      // name not swapped!
+      self.unkf_0x08 = swap_endian<float>(self.unkf_0x08);
+      self.unk_0x0c = swap_endian<int32_t>(self.unk_0x0c);
+      // zeropad[8] not swapped!
+      self.off_prev = swap_endian<int32_t>(self.off_prev);
+      self.off_next = swap_endian<int32_t>(self.off_next);
+      self.origin[0] = swap_endian<float>(self.origin[0]);
+      self.origin[1] = swap_endian<float>(self.origin[1]);
+      self.origin[2] = swap_endian<float>(self.origin[2]);
+      self.unk_0x2c = swap_endian<int32_t>(self.unk_0x2c);
+      self.unkf_0x30 = swap_endian<float>(self.unkf_0x30);
+      self.unused_0x34 = swap_endian<int32_t>(self.unused_0x34);
+      self.off_data = swap_endian<int32_t>(self.off_data);
+      return self;
+    };
   };
 
   // FLCG Models data
@@ -64,6 +100,22 @@ class FLCG : public Node3D {
     uint32_t num_tris;    // Col. triangles
     float unk_vec_a[3];   // These are probably a bounding box.
     float unk_vec_b[3];   //
+
+    static FLCGModelData read(std::ifstream& file) {
+      FLCGModelData self;
+      file.read(reinterpret_cast<char*>(&self), sizeof(FLCGModelData));
+      self.off_data_a = swap_endian<int32_t>(self.off_data_a);
+      self.off_tris = swap_endian<int32_t>(self.off_tris);
+      self.num_data_a = swap_endian<uint32_t>(self.num_data_a);
+      self.num_tris = swap_endian<uint32_t>(self.num_tris);
+      self.unk_vec_a[0] = swap_endian<float>(self.unk_vec_a[0]);
+      self.unk_vec_a[1] = swap_endian<float>(self.unk_vec_a[1]);
+      self.unk_vec_a[2] = swap_endian<float>(self.unk_vec_a[2]);
+      self.unk_vec_b[0] = swap_endian<float>(self.unk_vec_b[0]);
+      self.unk_vec_b[1] = swap_endian<float>(self.unk_vec_b[1]);
+      self.unk_vec_b[2] = swap_endian<float>(self.unk_vec_b[2]);
+      return self;
+    }
   };
 
   // FLCG Model data A
@@ -85,16 +137,33 @@ class FLCG : public Node3D {
     float v0[3];           //
     float v1[3];           //
     float v2[3];           //
+
+    static FLCGColTri read(std::ifstream& file) {
+      FLCGColTri self;
+      file.read(reinterpret_cast<char*>(&self), sizeof(FLCGColTri));
+      self.off_next = swap_endian<int32_t>(self.off_next);
+      self.unused = swap_endian<int32_t>(self.unused);
+      self.off_material = swap_endian<int32_t>(self.off_material);
+      self.v0[0] = swap_endian<float>(self.v0[0]);
+      self.v0[1] = swap_endian<float>(self.v0[1]);
+      self.v0[2] = swap_endian<float>(self.v0[2]);
+      self.v1[0] = swap_endian<float>(self.v1[0]);
+      self.v1[1] = swap_endian<float>(self.v1[1]);
+      self.v1[2] = swap_endian<float>(self.v1[2]);
+      self.v2[0] = swap_endian<float>(self.v2[0]);
+      self.v2[1] = swap_endian<float>(self.v2[1]);
+      self.v2[2] = swap_endian<float>(self.v2[2]);
+      return self;
+    }
   };
 
   // ---
 
   FLCGHeader header;
-  // std::vector<GMF2Object> objects;
 
-  // Recursively loads objects and their children from stream, and adds them to
-  // the tree.
-  void load_model(Node3D* parent, std::ifstream& file);
+  // Load models and add them as children.
+  void load_models(Node3D* parent, std::ifstream& file, int offset);
+  // Load geometry of a specific model.
   static Ref<ArrayMesh> load_geometry(std::ifstream& file, FLCGModel& obj);
 
  protected:
