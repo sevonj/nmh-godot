@@ -77,21 +77,6 @@ void FLCG::open(const String& filepath) {
 void FLCG::load_model(Node3D* parent, std::ifstream& file) {
   FLCGModel mdl;
   file.read(reinterpret_cast<char*>(&mdl), sizeof(FLCGModel));
-
-  UtilityFunctions::print("before:");
-  // UtilityFunctions::print("name: ", reinterpret_cast<char*>(&mdl.name));
-  UtilityFunctions::print("unkf_0x08: ", mdl.unkf_0x08);
-  UtilityFunctions::print("unk_0x0c: ", mdl.unk_0x0c);
-  // UtilityFunctions::print("zeropad: ", mdl.zeropad);
-  UtilityFunctions::print("off_prev: ", mdl.off_prev);
-  UtilityFunctions::print("off_next: ", mdl.off_next);
-  UtilityFunctions::print("origin: ", mdl.origin[0], mdl.origin[1],
-                          mdl.origin[2]);
-  UtilityFunctions::print("unk_0x2c: ", mdl.unk_0x2c);
-  UtilityFunctions::print("unkf_0x30: ", mdl.unkf_0x30);
-  UtilityFunctions::print("unused_0x34: ", mdl.unused_0x34);
-  UtilityFunctions::print("off_data: ", mdl.off_data);
-
   mdl.unkf_0x08 = swap_endian<float>(mdl.unkf_0x08);
   mdl.unk_0x0c = swap_endian<int32_t>(mdl.unk_0x0c);
   mdl.off_prev = swap_endian<int32_t>(mdl.off_prev);
@@ -104,7 +89,7 @@ void FLCG::load_model(Node3D* parent, std::ifstream& file) {
   mdl.unused_0x34 = swap_endian<int32_t>(mdl.unused_0x34);
   mdl.off_data = swap_endian<int32_t>(mdl.off_data);
 
-  UtilityFunctions::print("after:");
+  /*
   // UtilityFunctions::print("name: ", mdl.name);
   UtilityFunctions::print("unkf_0x08: ", mdl.unkf_0x08);
   UtilityFunctions::print("unk_0x0c: ", mdl.unk_0x0c);
@@ -117,7 +102,7 @@ void FLCG::load_model(Node3D* parent, std::ifstream& file) {
   UtilityFunctions::print("unkf_0x30: ", mdl.unkf_0x30);
   UtilityFunctions::print("unused_0x34: ", mdl.unused_0x34);
   UtilityFunctions::print("off_data: ", mdl.off_data);
-
+  */
   // objects.push_back(obj);
 
   float x = mdl.origin[0] * .1;
@@ -131,7 +116,7 @@ void FLCG::load_model(Node3D* parent, std::ifstream& file) {
 
   Ref<ArrayMesh> mesh = load_geometry(file, mdl);
   node->set_mesh(mesh);
-  // node->create_trimesh_collision();
+  node->create_trimesh_collision();
 
   if (mdl.off_next != 0) {
     file.seekg(mdl.off_next, std::ios::beg);
@@ -143,38 +128,38 @@ Ref<ArrayMesh> FLCG::load_geometry(std::ifstream& file, FLCGModel& mdl) {
   Ref<ArrayMesh> mesh = memnew(ArrayMesh);
   SurfaceTool* st = memnew(SurfaceTool);
 
-  int off_next = mdl.off_data;
+  UtilityFunctions::print("Loading model at ", mdl.off_data);
 
-  UtilityFunctions::print("Loading model at ", off_next);
+  st->begin(Mesh::PRIMITIVE_TRIANGLES);
 
-  while (off_next != 0) {
-    st->begin(Mesh::PRIMITIVE_TRIANGLES);
-
-    FLCGModelData data;
-    file.seekg(off_next, std::ios::beg);
-    file.read(reinterpret_cast<char*>(&data), sizeof(FLCGModelData));
-    data.off_data_a = swap_endian<int32_t>(data.off_data_a);
-
-    file.seekg(data.off_tris, std::ios::beg);
-
-    for (int i = 0; i < data.num_tris; i++) {
-      FLCGColTri tri;
-      file.read(reinterpret_cast<char*>(&tri), sizeof(FLCGColTri));
-      tri.off_next = swap_endian<int32_t>(tri.off_next);
-      tri.unused = swap_endian<int32_t>(tri.unused);
-      tri.off_material = swap_endian<int32_t>(tri.off_material);
-      for (int ii = 0; ii < 9; ii++) {
-        tri.v0[ii] = swap_endian<float>(tri.v0[ii]);
-      }
-      st->add_vertex(Vector3(tri.v0[0], tri.v0[1], tri.v0[2]));
-      st->add_vertex(Vector3(tri.v1[0], tri.v1[1], tri.v1[2]));
-      st->add_vertex(Vector3(tri.v2[0], tri.v2[1], tri.v2[2]));
-    }
-
-    st->commit(mesh);
-
-    off_next = mdl.off_next;
+  FLCGModelData data;
+  file.seekg(mdl.off_data, std::ios::beg);
+  file.read(reinterpret_cast<char*>(&data), sizeof(FLCGModelData));
+  data.off_data_a = swap_endian<int32_t>(data.off_data_a);
+  data.off_tris = swap_endian<int32_t>(data.off_tris);
+  data.num_data_a = swap_endian<int32_t>(data.num_data_a);
+  data.num_tris = swap_endian<int32_t>(data.num_tris);
+  for (int ii = 0; ii < 6; ii++) {
+    data.unk_vec_a[ii] = swap_endian<float>(data.unk_vec_a[ii]);
   }
+  file.seekg(data.off_tris, std::ios::beg);
+
+  for (int i = 0; i < data.num_tris; i++) {
+    // break;
+    FLCGColTri tri;
+    file.read(reinterpret_cast<char*>(&tri), sizeof(FLCGColTri));
+    tri.off_next = swap_endian<int32_t>(tri.off_next);
+    tri.unused = swap_endian<int32_t>(tri.unused);
+    tri.off_material = swap_endian<int32_t>(tri.off_material);
+    for (int ii = 0; ii < 9; ii++) {
+      tri.v0[ii] = swap_endian<float>(tri.v0[ii]) * .1;
+    }
+    st->add_vertex(Vector3(tri.v0[0], tri.v0[1], tri.v0[2]));
+    st->add_vertex(Vector3(tri.v1[0], tri.v1[1], tri.v1[2]));
+    st->add_vertex(Vector3(tri.v2[0], tri.v2[1], tri.v2[2]));
+  }
+
+  st->commit(mesh);
 
   return mesh;
 }

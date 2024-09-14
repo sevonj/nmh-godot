@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://dhnoeivicklod"]
+[gd_scene load_steps=6 format=3 uid="uid://dhnoeivicklod"]
 
 [ext_resource type="Script" path="res://classes/dragdrop.gd" id="1_q4bld"]
 [ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="2_vqvqo"]
 [ext_resource type="Theme" uid="uid://ibxsykxvwtee" path="res://ui/theme_default.tres" id="3_kqa80"]
+[ext_resource type="Material" uid="uid://r3ld28yds767" path="res://assets/materials/mat_wireframe.tres" id="3_p6tuc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a1g8l"]
 bg_color = Color(0, 0, 0, 0.498039)
@@ -20,9 +21,11 @@ shadow_enabled = true
 script = ExtResource("2_vqvqo")
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
+material = ExtResource("3_p6tuc")
 
 [node name="CSGSphere3D" type="CSGSphere3D" parent="CSGBox3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.192072, 0)
+material = ExtResource("3_p6tuc")
 
 [node name="Control" type="PanelContainer" parent="."]
 offset_right = 248.0
@@ -35,7 +38,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="Control/vbox"]
 layout_mode = 2
-text = "Drop GMF2 files to this window."
+text = "Drop GMF2 and FLCG files to this window."
 
 [node name="Label2" type="Label" parent="Control/vbox"]
 layout_mode = 2

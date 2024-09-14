@@ -1,4 +1,13 @@
 extends Node3D
+
+var _mouse_lock := false:
+	set(value):
+		_mouse_lock = value
+		if _mouse_lock:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 var _chunklist: Array[String] = [
 	"AREA000",
 	"AREA001",
@@ -49,10 +58,12 @@ var _chunklist: Array[String] = [
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	_load_world()
+	$ui/err_cant_find_files/MarginContainer/vbox/CenterContainer/retry.pressed.connect(get_tree().reload_current_scene)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	pass
+	if Input.is_action_just_pressed("ui_cancel"):
+		_mouse_lock = !_mouse_lock
 
 
 func _load_world() -> void:
@@ -61,21 +72,41 @@ func _load_world() -> void:
 	for chunkname in _chunklist:
 		var filepath := "gamedata/STG_HI/" + chunkname
 		var globalpath := basepath + filepath
-		if not OS.has_feature("standalone"):
-			globalpath = basepath + "nmh/" + filepath
+		#	globalpath = basepath + "nmh/" + filepath
+
 		if not FileAccess.file_exists(globalpath + ".GM2"):
 			_on_load_fail(globalpath + ".GM2")
 			break
 		if not FileAccess.file_exists(globalpath + "COL.GCL"):
 			_on_load_fail(globalpath + "COL.GCL")
 			break
+
 		var gmf2 := GMF2.new()
 		var flcg := FLCG.new()
 		gmf2.open(globalpath + ".GM2")
 		flcg.open(globalpath + "COL.GCL")
-		add_child(gmf2)
-		add_child(flcg)
+		$static.add_child(gmf2)
+		$static.add_child(flcg)
+
+		var flcg_children = flcg.get_children()
+		while not flcg_children.is_empty():
+			var new_children = []
+			for child in flcg_children:
+				if child is MeshInstance3D:
+					child.material_override = preload("res://assets/materials/mat_wireframe.tres")
+				new_children.append_array(child.get_children())
+			flcg_children = new_children
+
+		var camera := CameraRigTP.new()
+		var player := $entities/spawn/Player
+		$entities.add_child(camera)
+		camera.target = player.camera_target
+		camera.enable_input = true
+		player.camerarig = camera
+		_mouse_lock = true
+
+
 
 func _on_load_fail(file: String) -> void:
 	$ui/err_cant_find_files.show()
-	$ui/err_cant_find_files/center/errormsg.text += "\nThis particular file failed:\n"+file
+	$ui/err_cant_find_files/MarginContainer/vbox/msg.text += "\nThis particular file failed:\n"+file

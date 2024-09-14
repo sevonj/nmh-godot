@@ -1,12 +1,14 @@
-[gd_scene load_steps=8 format=3 uid="uid://di63axsmaamcv"]
+[gd_scene load_steps=9 format=3 uid="uid://di63axsmaamcv"]
 
 [ext_resource type="Texture2D" uid="uid://d0slmbu4ngvuk" path="res://Screenshot from 2024-09-13 23-40-35.png" id="1_3t1u7"]
 [ext_resource type="Script" path="res://scenes/world.gd" id="1_k3a5d"]
 [ext_resource type="Texture2D" uid="uid://dn7tq8qf6j1lw" path="res://assets/skybox/DaySkyHDRI046B_1K-HDR.exr" id="2_ogmkq"]
-[ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="4_efeux"]
+[ext_resource type="Script" path="res://classes/player.gd" id="3_qv0r2"]
+[ext_resource type="ArrayMesh" uid="uid://cr5fl7s0k141g" path="res://assets/characters/player_dummy/mdl_player_dummy.obj" id="4_y31ip"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ppnk8"]
 panorama = ExtResource("2_ogmkq")
+energy_multiplier = 3.0
 
 [sub_resource type="Sky" id="Sky_sjxs6"]
 sky_material = SubResource("PanoramaSkyMaterial_ppnk8")
@@ -14,6 +16,8 @@ sky_material = SubResource("PanoramaSkyMaterial_ppnk8")
 [sub_resource type="Environment" id="Environment_sf0fk"]
 background_mode = 2
 sky = SubResource("Sky_sjxs6")
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
 
 [node name="main" type="Node3D"]
 script = ExtResource("1_k3a5d")
@@ -26,6 +30,24 @@ shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env"]
 environment = SubResource("Environment_sf0fk")
+
+[node name="entities" type="Node3D" parent="."]
+
+[node name="spawn" type="Marker3D" parent="entities"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 159.17, 3.74678, 81.4718)
+
+[node name="Player" type="CharacterBody3D" parent="entities/spawn"]
+script = ExtResource("3_qv0r2")
+
+[node name="mdl" type="Node3D" parent="entities/spawn/Player"]
+
+[node name="MdlPlayerDummy" type="MeshInstance3D" parent="entities/spawn/Player/mdl"]
+mesh = ExtResource("4_y31ip")
+skeleton = NodePath("../..")
+
+[node name="coll" type="CollisionShape3D" parent="entities/spawn/Player"]
+
+[node name="static" type="Node3D" parent="."]
 
 [node name="ui" type="MarginContainer" parent="."]
 anchors_preset = 15
@@ -44,20 +66,36 @@ size_flags_horizontal = 3
 texture = ExtResource("1_3t1u7")
 expand_mode = 3
 
-[node name="center" type="CenterContainer" parent="ui/err_cant_find_files"]
+[node name="MarginContainer" type="MarginContainer" parent="ui/err_cant_find_files"]
+layout_mode = 2
+
+[node name="bg" type="ColorRect" parent="ui/err_cant_find_files/MarginContainer"]
+layout_mode = 2
+color = Color(0, 0.137255, 0.137255, 0.839216)
+
+[node name="vbox" type="VBoxContainer" parent="ui/err_cant_find_files/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+alignment = 1
 
-[node name="errormsg" type="RichTextLabel" parent="ui/err_cant_find_files/center"]
+[node name="msg" type="RichTextLabel" parent="ui/err_cant_find_files/MarginContainer/vbox"]
 layout_mode = 2
 bbcode_enabled = true
-text = "[font_size=32][rainbow freq=1.0 sat=0.8 val=0.8][wave amp=50.0 freq=5.0 connected=1]ERROR![/wave][/rainbow][/font_size]
-Can't open game files!
-Copy your NMH1 game files to gamedata directory next to the executable and try again.
-<---"
+text = "[font_size=32][rainbow freq=1.0 sat=0.8 val=0.8][wave amp=50.0 freq=5.0 connected=1]Error![/wave][/rainbow][/font_size]
+Can't find game data!
+
+Instructions:
+Copy your NMH1 game files to gamedata directory next to the executable as the
+screenshot shows.
+<---
+"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
 
-[node name="Camera3D" type="Node3D" parent="."]
-script = ExtResource("4_efeux")
+[node name="CenterContainer" type="CenterContainer" parent="ui/err_cant_find_files/MarginContainer/vbox"]
+layout_mode = 2
+
+[node name="retry" type="Button" parent="ui/err_cant_find_files/MarginContainer/vbox/CenterContainer"]
+layout_mode = 2
+text = "    Retry    "
