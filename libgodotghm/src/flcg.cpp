@@ -88,7 +88,8 @@ Ref<ArrayMesh> FLCG::load_geometry(std::ifstream& file, FLCGModel& mdl) {
     st->add_vertex(Vector3(tri.v1[0], tri.v1[1], tri.v1[2]) * .1);
     st->add_vertex(Vector3(tri.v2[0], tri.v2[1], tri.v2[2]) * .1);
   }
-
+  
+  st->generate_normals();
   st->commit(mesh);
 
   return mesh;
