@@ -5,6 +5,7 @@
 #ifndef NMH_GMF2_H
 #define NMH_GMF2_H
 
+#include <fstream>
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/node3d.hpp>
@@ -56,7 +57,7 @@ class GMF2 : public Node3D {
   };
 
   enum GMF2VecType {
-    I16,  // Divide by 2^v_divisor.
+    I16,    // Divide by 2^v_divisor.
     FLOAT,  //
   };
 
@@ -144,13 +145,13 @@ class GMF2 : public Node3D {
                                              GMF2Object& obj);
 
   static Vertex read_vertex_b(std::ifstream& file, int v_divisor,
-                                       int off_v_buf);
+                              int off_v_buf);
 
   static Vertex read_vertex_a(std::ifstream& file, int v_divisor,
-                                         int off_v_buf);
+                              int off_v_buf);
 
   static Vector3 read_v_pos(int vertex_coord_type, std::ifstream& file,
-                                  int off_v_buf, uint16_t idx);
+                            int off_v_buf, uint16_t idx);
 
  protected:
   static void _bind_methods();

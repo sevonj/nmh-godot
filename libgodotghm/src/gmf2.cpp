@@ -4,11 +4,8 @@
 
 #include "gmf2.h"
 
-#include <cstring>
-#include <fstream>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/surface_tool.hpp>
-#include <iostream>
 
 #include "util_swap_endian.h"
 
