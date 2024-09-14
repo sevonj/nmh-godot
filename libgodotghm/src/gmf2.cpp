@@ -43,10 +43,10 @@ void GMF2::open(const String& filepath) {
     UtilityFunctions::push_error("Version check: Expected 2, got ", version);
     return;
   }
-  file.seekg(0, std::ios::beg);
 
-  // File header
+  file.seekg(0, std::ios::beg);
   file.read(reinterpret_cast<char*>(&header), sizeof(GMF2Header));
+  /*
   UtilityFunctions::print("File contents:");
   UtilityFunctions::print("Objects:   ", header.num_objects);
   UtilityFunctions::print("Textures:  ", header.num_textures);
@@ -55,48 +55,40 @@ void GMF2::open(const String& filepath) {
   UtilityFunctions::print(" ");
   UtilityFunctions::print("unk_0x30: ", header.unk_0x30);
   UtilityFunctions::print("unk_0x34: ", header.unk_0x34);
-
-  // Objects
-  file.seekg(header.off_objects, std::ios::beg);
-  objects.resize(header.num_objects);
-  load_objects(this, file);
-
-  // print_tree_pretty();
-
-  Dictionary object_dict = Dictionary();
+  */
+  load_objects(this, file, header.off_objects);
 
   file.close();
   UtilityFunctions::print("Done!");
 }
 
-void GMF2::load_objects(Node3D* parent, std::ifstream& file) {
-  GMF2Object obj;
-  file.read(reinterpret_cast<char*>(&obj), sizeof(GMF2Object));
-  objects.push_back(obj);
+void GMF2::load_objects(Node3D* parent, std::ifstream& file, int offset) {
+  // Loop though linked list
+  int32_t off_next = offset;
+  while (off_next != 0) {
+    file.seekg(off_next, std::ios::beg);
+    GMF2Object obj = GMF2Object::read(file);
 
-  float x = obj.position[0] * .1;
-  float y = obj.position[1] * .1;
-  float z = obj.position[2] * .1;
+    // Node creation
+    MeshInstance3D* node = memnew(MeshInstance3D);
+    parent->add_child(node);
+    auto pos = Vector3(obj.position[0], obj.position[1], obj.position[2]) * .1;
+    node->set_position(pos);
+    node->rotate_y(obj.rotation[1]);
+    node->set_name(obj.name);
 
-  MeshInstance3D* node = memnew(MeshInstance3D);
-  parent->add_child(node);
-  node->set_position(Vector3(x, y, z));
-  node->rotate_y(obj.rotation[1]);
-  node->set_name(obj.name);
+    // Geometry
+    if (obj.off_surfaces != 0) {
+      Ref<ArrayMesh> mesh = load_object_geometry(file, obj);
+      node->set_mesh(mesh);
+    }
 
-  if (obj.off_surfaces != 0) {
-    Ref<ArrayMesh> mesh = load_object_geometry(file, obj);
-    node->set_mesh(mesh);
-  }
+    // Children recurse
+    if (obj.off_firstchild != 0) {
+      load_objects(node, file, obj.off_firstchild);
+    }
 
-  if (obj.off_firstchild != 0) {
-    file.seekg(obj.off_firstchild, std::ios::beg);
-    load_objects(node, file);
-  }
-
-  if (obj.off_next != 0) {
-    file.seekg(obj.off_next, std::ios::beg);
-    load_objects(parent, file);
+    off_next = obj.off_next;
   }
 }
 
@@ -105,29 +97,18 @@ Ref<ArrayMesh> GMF2::load_object_geometry(std::ifstream& file,
   Ref<ArrayMesh> mesh = memnew(ArrayMesh);
   SurfaceTool* st = memnew(SurfaceTool);
 
-  int vertex_coord_type;
-  if (obj.v_divisor == -1) {
-    vertex_coord_type = GMF2VertexCoordType::FLOAT;
-  } else {
-    vertex_coord_type = GMF2VertexCoordType::SHORT;
-  }
+  auto vec_type = (obj.v_divisor == -1) ? GMF2VecType::FLOAT : GMF2VecType::I16;
+  auto v_format = (obj.off_v_format == 0) ? GMF2VFormat::A : GMF2VFormat::B;
 
-  int vertex_format;
-  if (obj.off_v_format == 0) {
-    vertex_format = GMF2VertexFormat::IINNNUUUU;
-  } else {
-    vertex_format = GMF2VertexFormat::IINNNCCUUUU;
-  }
-
-  int off_next = obj.off_surfaces;
-
+  // Loop though linked list
+  int32_t off_next = obj.off_surfaces;
   while (off_next != 0) {
+    file.seekg(off_next, std::ios::beg);
+
     st->begin(Mesh::PRIMITIVE_TRIANGLES);
 
     // GMF Surface header
-    GMF2Surface surf;
-    file.seekg(off_next, std::ios::beg);
-    file.read(reinterpret_cast<char*>(&surf), sizeof(GMF2Surface));
+    GMF2Surface surf = GMF2Surface::read(file);
 
     // GMF Surface data
     // NOTICE: Big-Endian
@@ -148,34 +129,34 @@ Ref<ArrayMesh> GMF2::load_object_geometry(std::ifstream& file,
     // NOTICE: Big-Endian
     int remaining_vertices = num_vertices;
     while (remaining_vertices > 0) {
+      // -- Tristrip head
       uint16_t command;
       uint16_t num_v;
       file.read((char*)&command, sizeof(command));
       command = swap_endian<uint16_t>(command);
       if (command != 0x99) {
-        UtilityFunctions::push_error("ERR Cmd is: ", command);
-        st->commit(mesh);
+        UtilityFunctions::push_error("Unsupported GPU command: ", command);
         break;
       }
-
       file.read((char*)&num_v, sizeof(num_v));
       num_v = swap_endian<uint16_t>(num_v);
-      remaining_vertices -= num_v;
+
+      // -- Tristrip data
       Vertex vertices[num_v];
 
+      // Read vertices
       for (int i = 0; i < num_v; i++) {
-        if (vertex_format == GMF2VertexFormat::IINNNUUUU) {
-          vertices[i] =
-              parse_vertex_iinnnuuuu(file, obj.v_divisor, obj.off_v_buf);
-        } else {
-          vertices[i] =
-              parse_vertex_iinnnccuuuu(file, obj.v_divisor, obj.off_v_buf);
-        }
+        vertices[i] = (v_format == GMF2VFormat::A)
+                          ? read_vertex_b(file, obj.v_divisor, obj.off_v_buf)
+                          : read_vertex_a(file, obj.v_divisor, obj.off_v_buf);
       }
+
+      // Store vertices
       for (int i = 0; i < num_v - 2; i++) {
         Vertex v_a = vertices[i];
         Vertex v_b;
         Vertex v_c;
+        // We aren't triangle-stripping, undo alternating loop direction
         if (i % 2 == 0) {
           v_b = vertices[i + 2];
           v_c = vertices[i + 1];
@@ -183,7 +164,6 @@ Ref<ArrayMesh> GMF2::load_object_geometry(std::ifstream& file,
           v_b = vertices[i + 1];
           v_c = vertices[i + 2];
         }
-
         st->set_uv(v_a.uv);
         st->set_normal(v_a.norm);
         st->add_vertex(v_a.pos);
@@ -194,18 +174,19 @@ Ref<ArrayMesh> GMF2::load_object_geometry(std::ifstream& file,
         st->set_normal(v_c.norm);
         st->add_vertex(v_c.pos);
       }
+
+      remaining_vertices -= num_v;
     }
 
     st->commit(mesh);
-
     off_next = surf.off_next;
   }
 
   return mesh;
 }
 
-GMF2::Vertex GMF2::parse_vertex_iinnnuuuu(std::ifstream& file, int v_divisor,
-                                          int off_v_buf) {
+GMF2::Vertex GMF2::read_vertex_b(std::ifstream& file, int divisor,
+                                 int off_buf) {
   Vertex vert;
 
   uint16_t idx;
@@ -227,7 +208,7 @@ GMF2::Vertex GMF2::parse_vertex_iinnnuuuu(std::ifstream& file, int v_divisor,
   u = swap_endian<uint16_t>(u);
   v = swap_endian<uint16_t>(v);
 
-  vert.pos = parse_vertex_pos(v_divisor, file, off_v_buf, idx);
+  vert.pos = read_v_pos(divisor, file, off_buf, idx);
 
   vert.norm = Vector3(norm_x, norm_y, norm_z);
   vert.uv = Vector2(u, v) / pow(2, 10);
@@ -235,8 +216,8 @@ GMF2::Vertex GMF2::parse_vertex_iinnnuuuu(std::ifstream& file, int v_divisor,
   return vert;
 }
 
-GMF2::Vertex GMF2::parse_vertex_iinnnccuuuu(std::ifstream& file, int v_divisor,
-                                            int off_v_buf) {
+GMF2::Vertex GMF2::read_vertex_a(std::ifstream& file, int divisor,
+                                 int off_buf) {
   Vertex vert;
 
   uint16_t idx;
@@ -261,7 +242,7 @@ GMF2::Vertex GMF2::parse_vertex_iinnnccuuuu(std::ifstream& file, int v_divisor,
   u = swap_endian<uint16_t>(u);
   v = swap_endian<uint16_t>(v);
 
-  vert.pos = parse_vertex_pos(v_divisor, file, off_v_buf, idx);
+  vert.pos = read_v_pos(divisor, file, off_buf, idx);
 
   vert.norm = Vector3(norm_x, norm_y, norm_z);
   vert.uv = Vector2(u, v) / pow(2, 10);
@@ -269,16 +250,16 @@ GMF2::Vertex GMF2::parse_vertex_iinnnccuuuu(std::ifstream& file, int v_divisor,
   return vert;
 }
 
-Vector3 GMF2::parse_vertex_pos(int v_divisor, std::ifstream& file,
-                               int off_v_buf, int16_t idx) {
+Vector3 GMF2::read_v_pos(int divisor, std::ifstream& file, int off_buf,
+                         uint16_t idx) {
   // Remember position in file!
   auto stream_pos = file.tellg();
 
   Vector3 v_pos;
 
   // No v scale divisor means it's float. Otherwise it's short.
-  if (v_divisor == -1) {
-    file.seekg(off_v_buf + (idx * 3 * 4), std::ios::beg);
+  if (divisor == -1) {
+    file.seekg(off_buf + (idx * 3 * 4), std::ios::beg);
 
     float x;
     float y;
@@ -293,7 +274,7 @@ Vector3 GMF2::parse_vertex_pos(int v_divisor, std::ifstream& file,
     v_pos = Vector3(x, y, z);
 
   } else {
-    file.seekg(off_v_buf + (idx * 3 * 2), std::ios::beg);
+    file.seekg(off_buf + (idx * 3 * 2), std::ios::beg);
 
     int16_t x;
     int16_t y;
@@ -305,7 +286,7 @@ Vector3 GMF2::parse_vertex_pos(int v_divisor, std::ifstream& file,
     y = swap_endian<int16_t>(y);
     z = swap_endian<int16_t>(z);
 
-    v_pos = Vector3(x, y, z) / pow(2., v_divisor);
+    v_pos = Vector3(x, y, z) / pow(2., divisor);
   }
   v_pos /= 10.;
 

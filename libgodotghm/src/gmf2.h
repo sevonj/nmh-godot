@@ -55,8 +55,8 @@ class GMF2 : public Node3D {
     DONT_CAST_SHADOW = 0x100000,  //
   };
 
-  enum GMF2VertexCoordType {
-    SHORT,  // Divide by 2^v_divisor.
+  enum GMF2VecType {
+    I16,  // Divide by 2^v_divisor.
     FLOAT,  //
   };
 
@@ -67,9 +67,9 @@ class GMF2 : public Node3D {
    *  C: Vertex color. (unknown 2B)
    *  U: UV. (short[2])
    */
-  enum GMF2VertexFormat {
-    IINNNCCUUUU,  // 11B has color
-    IINNNUUUU,    // 9B no color
+  enum GMF2VFormat {
+    A,  // 11B IINNNCCUU
+    B,  // 9B, IINNNUU
   };
 
   // Surface
@@ -86,6 +86,12 @@ class GMF2 : public Node3D {
     short unk_0x1a;    // Corrupting this causes transparency glitches.
     short unk_0x1c;    // Corrupting this seems to do nothing.
     short unk_0x1e;    // Corrupting this seems to do nothing.
+
+    static GMF2Surface read(std::ifstream& file) {
+      GMF2Surface self;
+      file.read(reinterpret_cast<char*>(&self), sizeof(GMF2Surface));
+      return self;
+    }
   };
 
   // Object header
@@ -112,6 +118,12 @@ class GMF2 : public Node3D {
     float unk_0x6c;             // Unused 4th component of previous vector?
     float cullbox_size[3];      // XYZ size.
     float unk_0x7c;             // Unused 4th component of previous vector?
+
+    static GMF2Object read(std::ifstream& file) {
+      GMF2Object self;
+      file.read(reinterpret_cast<char*>(&self), sizeof(GMF2Object));
+      return self;
+    }
   };
 
   // Intermediate format, not GMF2.
@@ -124,22 +136,21 @@ class GMF2 : public Node3D {
   // ---
 
   GMF2Header header;
-  std::vector<GMF2Object> objects;
 
   // Recursively loads objects and their children from stream, and adds them to
   // the tree.
-  void load_objects(Node3D* parent, std::ifstream& file);
+  void load_objects(Node3D* parent, std::ifstream& file, int offset);
   static Ref<ArrayMesh> load_object_geometry(std::ifstream& file,
                                              GMF2Object& obj);
 
-  static Vertex parse_vertex_iinnnuuuu(std::ifstream& file, int v_divisor,
+  static Vertex read_vertex_b(std::ifstream& file, int v_divisor,
                                        int off_v_buf);
 
-  static Vertex parse_vertex_iinnnccuuuu(std::ifstream& file, int v_divisor,
+  static Vertex read_vertex_a(std::ifstream& file, int v_divisor,
                                          int off_v_buf);
 
-  static Vector3 parse_vertex_pos(int vertex_coord_type, std::ifstream& file,
-                                  int off_v_buf, int16_t idx);
+  static Vector3 read_v_pos(int vertex_coord_type, std::ifstream& file,
+                                  int off_v_buf, uint16_t idx);
 
  protected:
   static void _bind_methods();

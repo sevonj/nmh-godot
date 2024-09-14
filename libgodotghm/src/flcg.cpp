@@ -49,7 +49,7 @@ void FLCG::open(const String& filepath) {
 }
 
 void FLCG::load_models(Node3D* parent, std::ifstream& file, int offset) {
-  // Loop though the linked list
+  // Loop though linked list
   int32_t off_next = offset;
   while (off_next != 0) {
     file.seekg(off_next, std::ios::beg);
@@ -62,7 +62,7 @@ void FLCG::load_models(Node3D* parent, std::ifstream& file, int offset) {
     node->set_position(origin);
     node->set_name(reinterpret_cast<char*>(&mdl.name));
 
-    // Mesh
+    // Geometry
     Ref<ArrayMesh> mesh = load_geometry(file, mdl);
     node->set_mesh(mesh);
     node->create_trimesh_collision();
