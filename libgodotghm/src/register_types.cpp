@@ -5,6 +5,7 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "flcg.h"
 #include "gmf2.h"
 
 using namespace godot;
@@ -14,6 +15,7 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
     return;
   }
 
+  GDREGISTER_CLASS(FLCG);
   GDREGISTER_CLASS(GMF2);
 }
 
