@@ -30,6 +30,13 @@ offset_bottom = 18.0
 theme = ExtResource("3_kqa80")
 theme_override_styles/panel = SubResource("StyleBoxFlat_a1g8l")
 
-[node name="Label" type="Label" parent="Control"]
+[node name="vbox" type="VBoxContainer" parent="Control"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Control/vbox"]
 layout_mode = 2
 text = "Drop GMF2 files to this window."
+
+[node name="Label2" type="Label" parent="Control/vbox"]
+layout_mode = 2
+text = "Press P to enter Santa Destroy."

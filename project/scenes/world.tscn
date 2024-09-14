@@ -1,0 +1,63 @@
+[gd_scene load_steps=8 format=3 uid="uid://di63axsmaamcv"]
+
+[ext_resource type="Texture2D" uid="uid://d0slmbu4ngvuk" path="res://Screenshot from 2024-09-13 23-40-35.png" id="1_3t1u7"]
+[ext_resource type="Script" path="res://scenes/world.gd" id="1_k3a5d"]
+[ext_resource type="Texture2D" uid="uid://dn7tq8qf6j1lw" path="res://assets/skybox/DaySkyHDRI046B_1K-HDR.exr" id="2_ogmkq"]
+[ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="4_efeux"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ppnk8"]
+panorama = ExtResource("2_ogmkq")
+
+[sub_resource type="Sky" id="Sky_sjxs6"]
+sky_material = SubResource("PanoramaSkyMaterial_ppnk8")
+
+[sub_resource type="Environment" id="Environment_sf0fk"]
+background_mode = 2
+sky = SubResource("Sky_sjxs6")
+
+[node name="main" type="Node3D"]
+script = ExtResource("1_k3a5d")
+
+[node name="env" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="env"]
+environment = SubResource("Environment_sf0fk")
+
+[node name="ui" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="err_cant_find_files" type="HBoxContainer" parent="ui"]
+visible = false
+layout_mode = 2
+
+[node name="screenshot" type="TextureRect" parent="ui/err_cant_find_files"]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("1_3t1u7")
+expand_mode = 3
+
+[node name="center" type="CenterContainer" parent="ui/err_cant_find_files"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="errormsg" type="RichTextLabel" parent="ui/err_cant_find_files/center"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[font_size=32][rainbow freq=1.0 sat=0.8 val=0.8][wave amp=50.0 freq=5.0 connected=1]ERROR![/wave][/rainbow][/font_size]
+Can't open game files!
+Copy your NMH1 game files to gamedata directory next to the executable and try again.
+<---"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+
+[node name="Camera3D" type="Node3D" parent="."]
+script = ExtResource("4_efeux")

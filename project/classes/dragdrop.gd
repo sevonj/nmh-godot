@@ -15,6 +15,11 @@ func on_files_dropped(files: Array[String]):
 			gmf2.open(file)
 			add_child(gmf2)
 			models.append(gmf2)
+		if file.to_lower().ends_with(".gcl"):
+			var flcg := FLCG.new()
+			flcg.open(file)
+			add_child(flcg)
+			models.append(flcg)
 
 func _clear() -> void:
 	for model in models:
@@ -23,4 +28,5 @@ func _clear() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
-	pass
+	if Input.is_key_pressed(KEY_P):
+		get_tree().change_scene_to_file("res://scenes/world.tscn")
