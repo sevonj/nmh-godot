@@ -16,8 +16,10 @@ sky_material = SubResource("PanoramaSkyMaterial_ppnk8")
 [sub_resource type="Environment" id="Environment_sf0fk"]
 background_mode = 2
 sky = SubResource("Sky_sjxs6")
+sky_rotation = Vector3(0, -1.92161, 0)
 ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.2
 
 [node name="main" type="Node3D"]
 script = ExtResource("1_k3a5d")
@@ -25,8 +27,10 @@ script = ExtResource("1_k3a5d")
 [node name="env" type="Node3D" parent="."]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+transform = Transform3D(-0.479869, 0.6409, -0.599143, 0.0622144, 0.706047, 0.705426, 0.875131, 0.301237, -0.378684, -191.921, 20.7086, -61.1525)
+light_indirect_energy = 0.0
 shadow_enabled = true
+shadow_blur = 0.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="env"]
 environment = SubResource("Environment_sf0fk")
@@ -42,6 +46,7 @@ script = ExtResource("3_qv0r2")
 [node name="mdl" type="Node3D" parent="entities/spawn/Player"]
 
 [node name="MdlPlayerDummy" type="MeshInstance3D" parent="entities/spawn/Player/mdl"]
+gi_mode = 2
 mesh = ExtResource("4_y31ip")
 skeleton = NodePath("../..")
 
