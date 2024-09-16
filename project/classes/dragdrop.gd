@@ -15,11 +15,21 @@ func on_files_dropped(files: Array[String]):
 			gmf2.open(file)
 			add_child(gmf2)
 			models.append(gmf2)
+			continue
 		if file.to_lower().ends_with(".gcl"):
 			var flcg := FLCG.new()
 			flcg.open(file)
 			add_child(flcg)
 			models.append(flcg)
+			continue
+		if file.to_lower().ends_with(".rsl"):
+			var rmhg := RMHG.new()
+			rmhg.open(file)
+			var strings := rmhg.get_strings()
+			print(strings)
+			for string in strings:
+				print("S: ", string)
+			continue
 
 func _clear() -> void:
 	for model in models:

@@ -7,6 +7,7 @@
 
 #include "flcg.h"
 #include "gmf2.h"
+#include "rmhg.h"
 
 using namespace godot;
 
@@ -17,6 +18,7 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
 
   GDREGISTER_CLASS(FLCG);
   GDREGISTER_CLASS(GMF2);
+  GDREGISTER_CLASS(RMHG);
 }
 
 void uninitialize_example_module(ModuleInitializationLevel p_level) {
