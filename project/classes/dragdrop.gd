@@ -13,29 +13,48 @@ func on_files_dropped(files: Array[String]):
 	_clear()
 
 	for file in files:
-		if file.to_lower().ends_with(".gm2"):
-			var gmf2 := GMF2.new()
-			gmf2.open(file)
-			_3d_cont.add_child(gmf2)
-			continue
-
-		if file.to_lower().ends_with(".gcl"):
-			var flcg := FLCG.new()
-			flcg.open(file)
-			_3d_cont.add_child(flcg)
-			continue
-
-		if file.to_lower().ends_with(".rsl"):
-			var rmhg := RMHG.new()
-			rmhg.open(file)
-			var tree := RMHGTree.new()
-			tree.load_rmhg(rmhg)
-			_sidebar_cont.add_child(tree)
-			#var strings := rmhg.get_strings()
-			#print(strings)
-			#for string in strings:
-			#	print("S: ", string)
-			continue
+		var magic := GHMFile.get_magic_str(file)
+		if magic.is_empty():
+			print("magic: unrecognized")
+		else:
+			print("magic: ", magic)
+		match magic:
+			"FLCG":
+				var flcg := FLCG.new()
+				flcg.open(file)
+				_3d_cont.add_child(flcg)
+			"GAN2":
+				pass
+			"CGT0":
+				pass
+			"GMF2":
+				var gmf2 := GMF2.new()
+				gmf2.open(file)
+				_3d_cont.add_child(gmf2)
+			"RMHG":
+				var rmhg := RMHG.new()
+				rmhg.open(file)
+				var archive_tree := RMHGTree.new()
+				archive_tree.load_rmhg(rmhg)
+				_sidebar_cont.add_child(archive_tree)
+			"RSAR":
+				pass
+			"RSTM":
+				pass
+			"SEST":
+				pass
+			"STMD":
+				pass
+			"STSD":
+				pass
+			"STRIMAG2":
+				pass
+			"STRIMAGE":
+				pass
+			"THP":
+				pass
+			"":
+				pass
 
 func _clear() -> void:
 	# Clear 3D

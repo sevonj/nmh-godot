@@ -4,8 +4,6 @@
 
 #include "rmhg.h"
 
-#include "util_read.h"
-
 using namespace godot;  // namespace godot
 
 void RMHG::_bind_methods() {
