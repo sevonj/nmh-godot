@@ -31,7 +31,7 @@ class RMHG : public Node3D {
   struct RMHGHeader {
     int8_t magic[4];           // 'RMHG'
     uint32_t num_resources;    //
-    uint32_t attr_ptr;         //
+    uint32_t off_attributes;   //
     uint32_t version;          //
     uint32_t off_stringtable;  //
 
@@ -56,13 +56,15 @@ class RMHG : public Node3D {
   };
 
   // --- Data
-  String file;
-  RMHGHeader header;
-  PackedStringArray stringtable;
+  std::streamoff stream_begin;    // Not 0 if file is packed into an archive
+  String file;                    //
+  RMHGHeader header;              //
+  PackedStringArray stringtable;  //
 
   // --- Methods
 
   void load_stringtable(std::ifstream& file);
+  void load_attributes(std::ifstream& file);
 
  protected:
   static void _bind_methods();
@@ -71,8 +73,10 @@ class RMHG : public Node3D {
   RMHG() {};
   ~RMHG() {};
 
-  void open(const String& filepath);
-
+  // Open file
+  void open(const String& filepath) { open_at_offset(filepath, 0); }
+  // Open file packed into an other file
+  void open_at_offset(const String& filepath, int file_offset = 0);
   //
   PackedStringArray get_strings();
 };

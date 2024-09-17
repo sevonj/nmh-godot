@@ -22,9 +22,7 @@ func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("ui_cancel"):
 		_mouse_lock = false
 
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		_mouse_lock = true
-	else:
+	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_mouse_lock = false
 		mouse_delta *= 0.
 
@@ -38,6 +36,10 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseButton:
+		# -- Drag
+		if event.button_index == MOUSE_BUTTON_LEFT and event.is_pressed():
+			_mouse_lock = true
+
 		# -- Zoom in
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.is_pressed():
 			_distance *= .8

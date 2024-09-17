@@ -11,6 +11,11 @@ using namespace godot;  // namespace godot
 void RMHG::_bind_methods() {
   godot::ClassDB::bind_method(godot::D_METHOD("open", "path"),
                               &godot::RMHG::open);
+
+  godot::ClassDB::bind_method(
+      godot::D_METHOD("open_at_offset", "path", "offset"),
+      &godot::RMHG::open_at_offset);
+
   godot::ClassDB::bind_method(godot::D_METHOD("get_strings"),
                               &godot::RMHG::get_strings);
 }
@@ -20,8 +25,7 @@ void RMHG::load_stringtable(std::ifstream& file) {
     UtilityFunctions::push_error("header.off_stringtable == 0");
     return;
   }
-
-  file.seekg(header.off_stringtable, std::ios::beg);
+  file.seekg(stream_begin + header.off_stringtable, std::ios::beg);
 
   auto tbl_header = StringtableHeader::read(file);
   file.seekg(4, std::ios::cur);
@@ -55,7 +59,36 @@ void RMHG::load_stringtable(std::ifstream& file) {
   }
 }
 
-void RMHG::open(const String& filepath) {
+void godot::RMHG::load_attributes(std::ifstream& file) {
+  if (header.off_attributes == 0) {
+    UtilityFunctions::push_error("header.off_stringtable == 0");
+    return;
+  }
+  file.seekg(stream_begin + header.off_attributes, std::ios::beg);
+
+  for (int i = 0; i < header.num_resources; i++) {
+    int32_t resource_pointer;
+    int32_t size;
+    int32_t flags;
+    int32_t version;
+    int32_t str_idx;  // Directory name in string table
+    file.read(reinterpret_cast<char*>(&resource_pointer), sizeof(int32_t));
+    file.read(reinterpret_cast<char*>(&size), sizeof(int32_t));
+    file.read(reinterpret_cast<char*>(&flags), sizeof(int32_t));
+    file.read(reinterpret_cast<char*>(&version), sizeof(int32_t));
+    file.read(reinterpret_cast<char*>(&str_idx), sizeof(int32_t));
+    file.ignore(12);
+
+    if (str_idx == -1) {
+      UtilityFunctions::push_error("dir name string table index == -1");
+      return;
+    }
+    String dir_name = stringtable[str_idx];
+    UtilityFunctions::print("dir: ", dir_name, " size: ", size, " ptr: ", resource_pointer);
+  }
+}
+
+void RMHG::open_at_offset(const String& filepath, int file_offset) {
   UtilityFunctions::print("Opening ", filepath, " as RMHG.");
   const char* path = filepath.utf8().get_data();
 
@@ -65,6 +98,8 @@ void RMHG::open(const String& filepath) {
     UtilityFunctions::push_error("Unable to open.");
     return;
   }
+  file.seekg(file_offset, std::ios::beg);
+  stream_begin = file.tellg();
 
   // Check magic and version
   int32_t magic;
@@ -75,11 +110,12 @@ void RMHG::open(const String& filepath) {
     return;
   }
 
-  file.seekg(0, std::ios::beg);
+  file.seekg(stream_begin);
 
   header = RMHGHeader::read(file);
 
   load_stringtable(file);
+  load_attributes(file);
 
   file.close();
   UtilityFunctions::print("Done!");

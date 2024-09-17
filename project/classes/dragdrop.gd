@@ -1,10 +1,13 @@
-extends Node3D
+extends Node
 
-var models: Array[Node] = []
+@onready var _sidebar_cont := $hsplit/sidebar/sidebar_cont
+
+@onready var _3d_root := $"hsplit/3d_panel/subviewport_cont/subviewport/3d_root"
+@onready var _3d_cont := $"hsplit/3d_panel/subviewport_cont/subviewport/3d_root/loaded_content_container"
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	get_viewport().files_dropped.connect(on_files_dropped)
+	get_tree().root.get_viewport().files_dropped.connect(on_files_dropped)
 
 func on_files_dropped(files: Array[String]):
 	_clear()
@@ -13,28 +16,36 @@ func on_files_dropped(files: Array[String]):
 		if file.to_lower().ends_with(".gm2"):
 			var gmf2 := GMF2.new()
 			gmf2.open(file)
-			add_child(gmf2)
-			models.append(gmf2)
+			_3d_cont.add_child(gmf2)
 			continue
+
 		if file.to_lower().ends_with(".gcl"):
 			var flcg := FLCG.new()
 			flcg.open(file)
-			add_child(flcg)
-			models.append(flcg)
+			_3d_cont.add_child(flcg)
 			continue
+
 		if file.to_lower().ends_with(".rsl"):
 			var rmhg := RMHG.new()
 			rmhg.open(file)
-			var strings := rmhg.get_strings()
-			print(strings)
-			for string in strings:
-				print("S: ", string)
+			var tree := RMHGTree.new()
+			tree.load_rmhg(rmhg)
+			_sidebar_cont.add_child(tree)
+			#var strings := rmhg.get_strings()
+			#print(strings)
+			#for string in strings:
+			#	print("S: ", string)
 			continue
 
 func _clear() -> void:
-	for model in models:
-		model.free()
-	models.clear()
+	# Clear 3D
+	for child in _3d_cont.get_children():
+		child.queue_free()
+
+	# Clear Sidebar
+	for child in _sidebar_cont.get_children():
+		child.queue_free()
+
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
