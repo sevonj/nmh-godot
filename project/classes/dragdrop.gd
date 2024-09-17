@@ -13,7 +13,7 @@ func on_files_dropped(files: Array[String]):
 	_clear()
 
 	for file in files:
-		var magic := GHMFile.get_magic_str(file)
+		var magic := GHMFile.get_file_type(file)
 		if magic.is_empty():
 			print("magic: unrecognized")
 		else:
@@ -37,6 +37,8 @@ func on_files_dropped(files: Array[String]):
 				var archive_tree := RMHGTree.new()
 				archive_tree.load_rmhg(rmhg)
 				_sidebar_cont.add_child(archive_tree)
+				#for string in rmhg.get_strings():
+				#	print(string)
 			"RSAR":
 				pass
 			"RSTM":

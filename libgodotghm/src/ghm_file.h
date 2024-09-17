@@ -10,7 +10,7 @@
 
 namespace godot {
 
-// 
+//
 class GHMFile : public Object {
   GDCLASS(GHMFile, Object)
 
@@ -19,15 +19,15 @@ class GHMFile : public Object {
  protected:
   static void _bind_methods() {
     godot::ClassDB::bind_static_method(get_class_static(),
-                                       godot::D_METHOD("get_magic_str", "path"),
-                                       &GHMFile::get_magic_str);
+                                       godot::D_METHOD("get_file_type", "path"),
+                                       &GHMFile::get_file_type);
   }
 
  public:
   GHMFile() {};
   ~GHMFile() {};
 
-  enum MagicValues {
+  enum MagicValue {
     MV_UNKNOWN = -1,
     MV_FLCG = 1195592774,
     MV_GAN2 = 843989319,
@@ -46,106 +46,93 @@ class GHMFile : public Object {
   };
 
   // Read a null-terminated string from file stream
-  static MagicValues get_magic(std::ifstream& file) {
+  static MagicValue get_magic(std::ifstream& file) {
     int32_t magic32;
     file.read((char*)&magic32, sizeof(magic32));
 
     switch (magic32) {
       case MV_FLCG:
-        return MagicValues::MV_FLCG;
+        return MagicValue::MV_FLCG;
       case MV_GAN2:
-        return MagicValues::MV_GAN2;
+        return MagicValue::MV_GAN2;
       case MV_CGT0:
-        return MagicValues::MV_CGT0;
+        return MagicValue::MV_CGT0;
       case MV_GMF2:
-        return MagicValues::MV_GMF2;
+        return MagicValue::MV_GMF2;
       case MV_RMHG:
-        return MagicValues::MV_RMHG;
+        return MagicValue::MV_RMHG;
       case MV_RSAR:
-        return MagicValues::MV_RSAR;
+        return MagicValue::MV_RSAR;
       case MV_RSTM:
-        return MagicValues::MV_RSTM;
+        return MagicValue::MV_RSTM;
       case MV_SEST:
-        return MagicValues::MV_RSTM;
+        return MagicValue::MV_RSTM;
       case MV_STMD:
-        return MagicValues::MV_STMD;
+        return MagicValue::MV_STMD;
       case MV_STSD:
-        return MagicValues::MV_STSD;
+        return MagicValue::MV_STSD;
       case MV_STRI____:
         file.seekg(-4, std::ios::cur);
         int64_t magic64;
         file.read((char*)&magic64, sizeof(magic64));
         switch (magic64) {
           case MV_STRIMAG2:
-            return MagicValues::MV_STRIMAG2;
+            return MagicValue::MV_STRIMAG2;
           case MV_STRIMAGE:
-            return MagicValues::MV_STRIMAGE;
+            return MagicValue::MV_STRIMAGE;
           default:
-            return MagicValues::MV_UNKNOWN;
+            return MagicValue::MV_UNKNOWN;
         }
       case MV_THP:
-        return MagicValues::MV_THP;
+        return MagicValue::MV_THP;
       default:
         return MV_UNKNOWN;
     }
   }
 
-  static String get_magic_str(const String& filepath) {
+  // Open a file and get a type string.
+  static String get_file_type(const String& filepath) {
     const char* path = filepath.utf8().get_data();
-
-    String str;
 
     std::ifstream file(path, std::ios::binary);
     if (!file) {
       UtilityFunctions::push_error("Unable to open.");
-      return str;
+      return String();
     }
+    return magic_to_string(get_magic(file));
+  }
 
-    switch (get_magic(file)) {
+  static String magic_to_string(MagicValue magic) {
+    switch (magic) {
       case MV_FLCG:
-        str += "FLCG";
-        break;
+        return String("FLCG");
       case MV_GAN2:
-        str += "GAN2";
-        break;
+        return String("GAN2");
       case MV_CGT0:
-        str += "CGT0";
-        break;
+        return String("CGT0");
       case MV_GMF2:
-        str += "GMF2";
-        break;
+        return String("GMF2");
       case MV_RMHG:
-        str += "RMHG";
-        break;
+        return String("RMHG");
       case MV_RSAR:
-        str += "RSAR";
-        break;
+        return String("RSAR");
       case MV_RSTM:
-        str += "RSTM";
-        break;
+        return String("RSTM");
       case MV_SEST:
-        str += "RSTM";
-        break;
+        return String("RSTM");
       case MV_STMD:
-        str += "STMD";
-        break;
+        return String("STMD");
       case MV_STSD:
-        str += "STSD";
-        break;
+        return String("STSD");
       case MV_STRIMAG2:
-        str += "STRIMAG2";
-        break;
+        return String("STRIMAG2");
       case MV_STRIMAGE:
-        str += "STRIMAGE";
-        break;
+        return String("STRIMAGE");
       case MV_THP:
-        str += "THP";
-        break;
+        return String("THP");
       default:
-        str += "";
-        break;
+        return String("");
     }
-    return str;
   }
 };
 }  // namespace godot

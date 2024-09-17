@@ -11,6 +11,7 @@
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "ghm_file.h"
 #include "util_swap_endian.h"
 
 namespace godot {
@@ -44,9 +45,9 @@ class RMHG : public Node3D {
 
   // 12B little-endian
   struct StringtableHeader {
-    uint32_t num_strings;
-    int32_t unknown;
-    int32_t flags;
+    uint32_t num_strings;  //
+    int32_t unknown;       //
+    int32_t flags;         //
 
     static StringtableHeader read(std::ifstream& file) {
       StringtableHeader self;
@@ -57,9 +58,10 @@ class RMHG : public Node3D {
 
   // --- Data
   std::streamoff stream_begin;    // Not 0 if file is packed into an archive
-  String file;                    //
+  String opened_filepath;         //
   RMHGHeader header;              //
   PackedStringArray stringtable;  //
+  Dictionary hierarchy;           //
 
   // --- Methods
 
@@ -70,8 +72,23 @@ class RMHG : public Node3D {
   static void _bind_methods();
 
  public:
+  class RMHGPackedFileDescriptor : public RefCounted {
+    GDCLASS(RMHGPackedFileDescriptor, RefCounted)
+   private:
+    //
+   protected:
+    static void _bind_methods() {}
+
+   public:
+    String name;
+    GHMFile::MagicValue magic;
+    int offset;
+  };
+
   RMHG() {};
   ~RMHG() {};
+
+  String get_file_path() { return opened_filepath; }
 
   // Open file
   void open(const String& filepath) { open_at_offset(filepath, 0); }
@@ -79,6 +96,7 @@ class RMHG : public Node3D {
   void open_at_offset(const String& filepath, int file_offset = 0);
   //
   PackedStringArray get_strings();
+  Dictionary get_hierarchy();
 };
 
 }  // namespace godot
