@@ -17,8 +17,8 @@ void RMHG::_bind_methods() {
   godot::ClassDB::bind_method(godot::D_METHOD("get_strings"),
                               &godot::RMHG::get_strings);
 
-  godot::ClassDB::bind_method(godot::D_METHOD("get_hierarchy"),
-                              &godot::RMHG::get_hierarchy);
+  godot::ClassDB::bind_method(godot::D_METHOD("get_root"),
+                              &godot::RMHG::get_root);
 
   godot::ClassDB::bind_method(godot::D_METHOD("get_file_path"),
                               &godot::RMHG::get_file_path);
@@ -64,49 +64,104 @@ void RMHG::load_stringtable(std::ifstream& file) {
 }
 
 void godot::RMHG::load_attributes(std::ifstream& file) {
-  if (header.off_attributes == 0) {
+  if (header.off_resourcetable == 0) {
     UtilityFunctions::push_error("header.off_stringtable == 0");
     return;
   }
-  file.seekg(stream_begin + header.off_attributes, std::ios::beg);
+  file.seekg(stream_begin + header.off_resourcetable, std::ios::beg);
 
-  for (int i = 0; i < header.num_resources; i++) {
-    int32_t off_resource;
-    int32_t len_resource;
-    int32_t flags;
-    int32_t version;
-    int32_t str_idx;  // Directory name in string table
+  root.instantiate();
+  root->set_offset(0);
+  root->set_size(file.left);
+  root->set_dir(1);
+  root->set_version(header.version);
+  root->set_magic(GHMFile::magic32(*((int32_t*)header.magic)));
+  // because .split[-1] crashes?
+  auto pathsplit = opened_filepath.split("/", false);
+  root->set_filename(pathsplit[pathsplit.size() - 1]);
+
+  
+
+  file.seekg(stream_begin + root->get_offset());
+  load_packed_dir(root, file);
+}
+
+void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file,
+                           bool stahp) {
+  auto dir_header = RMHGHeader::read(file);
+
+  UtilityFunctions::print(" Name: ", parent->get_name(),
+                          " Offset: ", parent->get_offset());
+  UtilityFunctions::print(" num_res: ", dir_header.num_resources,
+                          " off_res: ", dir_header.off_resourcetable,
+                          " off_str: ", dir_header.off_stringtable);
+
+  file.seekg(parent->get_offset() + dir_header.off_resourcetable);
+
+  for (int i = 0; i < dir_header.num_resources; i++) {
+    int32_t off_resource;  //
+    int32_t len_resource;  //
+    int32_t is_dir;        //
+    int32_t version;       //
+    int32_t str_idx;       // Directory name in string table
     file.read(reinterpret_cast<char*>(&off_resource), sizeof(int32_t));
+    off_resource += parent->get_offset();
     file.read(reinterpret_cast<char*>(&len_resource), sizeof(int32_t));
-    file.read(reinterpret_cast<char*>(&flags), sizeof(int32_t));
+    file.read(reinterpret_cast<char*>(&is_dir), sizeof(int32_t));
     file.read(reinterpret_cast<char*>(&version), sizeof(int32_t));
     file.read(reinterpret_cast<char*>(&str_idx), sizeof(int32_t));
     file.ignore(12);
 
-    if (str_idx == -1) {
-      UtilityFunctions::push_error("dir name string table index == -1");
-      return;
+    // We do some seeking for magic and recursion, but we're also looping
+    // resources here
+    auto stream_position = file.tellg();
+
+    // if (str_idx == -1) {
+    //   UtilityFunctions::push_error("dir name string table index == -1");
+    //   return;
+    // }
+
+    file.seekg(off_resource);
+    auto res_magic = GHMFile::get_magic(file);
+    file.seekg(stream_position, std::ios::beg);
+
+    if (str_idx < stringtable.size()) {
+      UtilityFunctions::print("str_idx: ", str_idx, " - ",
+                              stringtable[str_idx]);
+    } else {
+      UtilityFunctions::print("str_idx: ", str_idx);
     }
 
-    String res_name = stringtable[str_idx];
-    UtilityFunctions::print("dir: ", res_name, " size: ", len_resource,
-                            " off: ", off_resource);
+    if (stahp) {
+      continue;
+    }
 
-    auto prev_pos = file.tellg();
-    file.seekg(stream_begin + off_resource);
-    auto res_magic = GHMFile::get_magic(file);
-    file.seekg(prev_pos);
-
-    Dictionary file_dict;
-    file_dict["name"] = res_name;
-    file_dict["offset"] = off_resource;
-    file_dict["size"] = off_resource;
-    file_dict["flags"] = flags;
-    file_dict["type"] = GHMFile::magic_to_string(res_magic);
-
-    hierarchy[res_name] = file_dict;
-
-    // Check res magic
+    if (is_dir == 0) {
+      Ref<RMHGFileDescriptor> resource;
+      resource.instantiate();
+      resource->set_filepath(opened_filepath);
+      resource->set_offset(off_resource);
+      resource->set_size(len_resource);
+      resource->set_dir(is_dir);
+      resource->set_version(version);
+      resource->set_magic(res_magic);
+      resource->set_filename(stringtable[str_idx]);
+      parent->add_resource(resource);
+    } else {
+      Ref<RMHGDirDescriptor> subdir;
+      subdir.instantiate();
+      subdir->set_filepath(opened_filepath);
+      subdir->set_offset(off_resource);
+      subdir->set_size(len_resource);
+      subdir->set_dir(is_dir);
+      subdir->set_version(version);
+      subdir->set_magic(res_magic);
+      subdir->set_filename(stringtable[str_idx]);
+      parent->add_resource(subdir);
+      file.seekg(off_resource);
+      load_packed_dir(subdir, file, false);
+      file.seekg(stream_position, std::ios::beg);
+    }
   }
 }
 
@@ -138,10 +193,10 @@ void RMHG::open_at_offset(const String& filepath, int file_offset) {
   header = RMHGHeader::read(file);
 
   UtilityFunctions::print("num_res: ", header.num_resources);
-  UtilityFunctions::print("off_att: ", header.off_attributes);
+  UtilityFunctions::print("off_att: ", header.off_resourcetable);
   UtilityFunctions::print("off_str: ", header.off_stringtable);
 
-  if (file_offset != 0){
+  if (file_offset != 0) {
     return;
   }
 
@@ -156,4 +211,4 @@ void RMHG::open_at_offset(const String& filepath, int file_offset) {
 
 PackedStringArray godot::RMHG::get_strings() { return stringtable.duplicate(); }
 
-Dictionary godot::RMHG::get_hierarchy() { return hierarchy.duplicate(); }
+Ref<RMHGDirDescriptor> godot::RMHG::get_root() { return root; }

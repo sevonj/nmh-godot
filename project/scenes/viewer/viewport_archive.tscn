@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3 uid="uid://c7i04qi1j70bq"]
+
+[ext_resource type="Texture2D" uid="uid://vae1uylgwine" path="res://assets/icons/icon_rmhg.png" id="1_e88t3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0acfi"]
+bg_color = Color(0.298039, 0.298039, 0.298039, 1)
+
+[node name="viewport_archive" type="PanelContainer"]
+theme_override_styles/panel = SubResource("StyleBoxFlat_0acfi")
+
+[node name="vbox" type="VBoxContainer" parent="."]
+layout_mode = 2
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="vbox"]
+layout_mode = 2
+texture = ExtResource("1_e88t3")
+stretch_mode = 3
+
+[node name="label" type="Label" parent="vbox"]
+layout_mode = 2
+text = "RMHG
+archive"
+horizontal_alignment = 1

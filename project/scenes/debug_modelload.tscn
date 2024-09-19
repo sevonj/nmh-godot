@@ -1,11 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://dhnoeivicklod"]
+[gd_scene load_steps=5 format=3 uid="uid://dhnoeivicklod"]
 
 [ext_resource type="Script" path="res://classes/dragdrop.gd" id="1_q4bld"]
-[ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="2_vqvqo"]
+[ext_resource type="PackedScene" uid="uid://c7i04qi1j70bq" path="res://scenes/viewer/viewport_archive.tscn" id="3_60sro"]
 [ext_resource type="Theme" uid="uid://ibxsykxvwtee" path="res://ui/theme_default.tres" id="3_kqa80"]
-[ext_resource type="Material" uid="uid://r3ld28yds767" path="res://assets/materials/mat_wireframe.tres" id="3_p6tuc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k55hy"]
+bg_color = Color(0.196078, 0.196078, 0.196078, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -24,6 +24,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("3_kqa80")
 script = ExtResource("1_q4bld")
+
+[node name="bg_color" type="ColorRect" parent="."]
+layout_mode = 2
+color = Color(0.197937, 0.197937, 0.197937, 1)
 
 [node name="hsplit" type="HSplitContainer" parent="."]
 layout_mode = 2
@@ -47,41 +51,33 @@ visible = false
 layout_mode = 2
 text = "Press P to enter Santa Destroy."
 
-[node name="3d_panel" type="PanelContainer" parent="hsplit"]
+[node name="viewport_panel" type="PanelContainer" parent="hsplit"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_k55hy")
 
-[node name="subviewport_cont" type="SubViewportContainer" parent="hsplit/3d_panel"]
+[node name="label_instructions" type="Label" parent="hsplit/viewport_panel"]
 layout_mode = 2
-stretch = true
+text = "Drop files here to open them.
 
-[node name="subviewport" type="SubViewport" parent="hsplit/3d_panel/subviewport_cont"]
-own_world_3d = true
-handle_input_locally = false
-size = Vector2i(886, 646)
-render_target_update_mode = 4
+Supported formats:
+- FLCG (.gcl)
+- GMF2 (.gm2)
+- RMHG (.rsl)
 
-[node name="3d_root" type="Node3D" parent="hsplit/3d_panel/subviewport_cont/subviewport"]
+No format is fully supported.
+Some files will crash the program.
 
-[node name="env" type="Node3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root"]
+Press P to enter Santa Destroy (NMH1)."
+horizontal_alignment = 1
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root/env"]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
-shadow_enabled = true
+[node name="viewport_cont" type="MarginContainer" parent="hsplit/viewport_panel"]
+layout_mode = 2
 
-[node name="entities" type="Node3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root"]
+[node name="viewport_archive" parent="hsplit/viewport_panel/viewport_cont" instance=ExtResource("3_60sro")]
+visible = false
+layout_mode = 2
 
-[node name="Camera3D" type="Node3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root/entities"]
-script = ExtResource("2_vqvqo")
-
-[node name="static" type="Node3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root"]
-
-[node name="CSGBox3D" type="CSGBox3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root/static"]
-material = ExtResource("3_p6tuc")
-
-[node name="CSGSphere3D" type="CSGSphere3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root/static/CSGBox3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.192072, 0)
-material = ExtResource("3_p6tuc")
-
-[node name="loaded_content_container" type="Node3D" parent="hsplit/3d_panel/subviewport_cont/subviewport/3d_root"]
+[node name="viewport_ovl" type="Control" parent="hsplit/viewport_panel"]
+layout_mode = 2
+mouse_filter = 2

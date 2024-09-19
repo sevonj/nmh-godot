@@ -1,21 +1,21 @@
 class_name RMHGTree
-extends HSplitContainer
-
-var _tree: Tree # Tree node for this archive
-var _preview: Control # The main view for when anything is opened
+extends Tree
 
 var rmhg: RMHG
+signal sig_res_selected(res: RMHGFileDescriptor)
+
+enum meta{
+	RES_DESC = 0
+}
 
 func _init() -> void:
 	size_flags_horizontal = SIZE_EXPAND_FILL
 	size_flags_vertical = SIZE_EXPAND_FILL
-	_tree = Tree.new()
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	add_child(_tree)
-	_tree.hide_root = true
-	_tree.item_selected.connect(_on_tree_item_selected)
+	#hide_root = true
+	item_selected.connect(_on_tree_item_selected)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -29,30 +29,25 @@ func load_rmhg(input: RMHG):
 		push_error("Invalid RMHG!")
 		return
 
-	var root := _tree.create_item()
-	var hierarchy = rmhg.get_hierarchy()
-	for key in hierarchy:
-		var child := _tree.create_item(root)
-		var entry: Dictionary = hierarchy[key]
-		var str := "[%s] %s" % [entry.get("type"), entry.get("name")]
-		child.set_text(0, entry.get("name"))
+	var tree_root := create_item()
+	var archive_root := rmhg.get_root()
+	tree_root.set_text(0, archive_root.get_name())
+	tree_root.set_metadata(meta.RES_DESC, archive_root)
+	_load_dir(archive_root, tree_root)
 
-	print(rmhg.get_hierarchy())
+func _load_dir(dir: RMHGDirDescriptor, tree_parent: TreeItem) -> void:
+	for resource in dir.get_contents():
+		var tree_child := create_item(tree_parent)
+		tree_child.set_metadata(meta.RES_DESC, resource)
+		if resource is RMHGDirDescriptor:
+			tree_child.set_text(0, resource.get_name() + " (dir)")
+			_load_dir(resource, tree_child)
+		else:
+			tree_child.set_text(0, resource.get_name())
 
 # --- Private --- #
 
 func _on_tree_item_selected():
-	if is_instance_valid(_preview):
-		_preview.queue_free()
-
-	var hierarchy = rmhg.get_hierarchy()
-	var key = _tree.get_selected().get_text(0)
-	print("hierarchy:", hierarchy)
-	print("key: ", key)
-	var res: Dictionary = hierarchy.get(key)
-
-	if res.get("type") == "RMHG":
-		var inner_rmhg := RMHG.new()
-		inner_rmhg.open_at_offset(rmhg.get_file_path(), res.get("offset"))
-		#_preview = RMHGTree.new()
-		#_preview.load_rmhg(inner_rmhg)
+	var selected := get_selected()
+	var resource: RMHGFileDescriptor = selected.get_metadata(meta.RES_DESC)
+	sig_res_selected.emit(resource)

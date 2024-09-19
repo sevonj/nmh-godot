@@ -22,7 +22,8 @@ void initialize_example_module(ModuleInitializationLevel p_level) {
   GDREGISTER_CLASS(FLCG);
   GDREGISTER_CLASS(GMF2);
   GDREGISTER_CLASS(RMHG);
-  GDREGISTER_CLASS(RMHG::RMHGPackedFileDescriptor);
+  GDREGISTER_CLASS(RMHGFileDescriptor);
+  GDREGISTER_CLASS(RMHGDirDescriptor);
 }
 
 void uninitialize_example_module(ModuleInitializationLevel p_level) {

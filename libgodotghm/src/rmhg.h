@@ -16,6 +16,89 @@
 
 namespace godot {
 
+// A file packed into an archive
+class RMHGFileDescriptor : public RefCounted {
+  GDCLASS(RMHGFileDescriptor, RefCounted)
+ private:
+  String filepath;        // Path of the root archive
+  uint32_t off_resource;  // Offset in the root archive
+  uint32_t len_resource;  // Data size
+  int32_t dir_flag;          //
+  int32_t version;        //
+  // int32_t str_idx;            //
+  GHMFile::MagicValue magic;  //
+  String filename;            //
+
+ protected:
+  static void _bind_methods() {
+    godot::ClassDB::bind_method(godot::D_METHOD("_to_string()"),
+                                &godot::RMHGFileDescriptor::_to_string);
+    godot::ClassDB::bind_method(godot::D_METHOD("get_filepath"),
+                                &godot::RMHGFileDescriptor::get_filepath);
+    godot::ClassDB::bind_method(godot::D_METHOD("get_offset"),
+                                &godot::RMHGFileDescriptor::get_offset);
+    godot::ClassDB::bind_method(godot::D_METHOD("get_size"),
+                                &godot::RMHGFileDescriptor::get_size);
+    godot::ClassDB::bind_method(godot::D_METHOD("is_dir"),
+                                &godot::RMHGFileDescriptor::is_dir);
+    godot::ClassDB::bind_method(godot::D_METHOD("get_version"),
+                                &godot::RMHGFileDescriptor::get_version);
+    godot::ClassDB::bind_method(godot::D_METHOD("get_type"),
+                                &godot::RMHGFileDescriptor::get_type);
+    godot::ClassDB::bind_method(godot::D_METHOD("get_name"),
+                                &godot::RMHGFileDescriptor::get_name);
+  }
+
+ public:
+  String get_filepath() { return filepath; }             // Archive path
+  uint32_t get_offset() { return off_resource; }                 //
+  uint32_t get_size() { return len_resource; }                   //
+  uint32_t is_dir() { return dir_flag; }                         //
+  uint32_t get_version() { return version; }                     //
+  String get_type() { return GHMFile::magic_to_string(magic); }  // Type str
+  String get_name() { return filename; }  // Get packed file name
+
+  String _to_string() {
+    String str;
+    str += "[" + get_type() + "] " + filename + " ";
+    str += "is_dir: " + String(std::to_string(dir_flag).c_str()) + " ";
+    str += "ver: " + String(std::to_string(version).c_str()) + " ";
+    str += "off: " + String(std::to_string(off_resource).c_str()) + " ";
+    str += "size: " + String(std::to_string(len_resource).c_str()) + " ";
+    return str;
+  };
+
+  void set_filepath(String value) { filepath = value; }
+  void set_offset(uint32_t value) { off_resource = value; }
+  void set_size(uint32_t value) { len_resource = value; }
+  void set_dir(int32_t value) { dir_flag = value; }
+  void set_version(int32_t value) { version = value; }
+  void set_magic(GHMFile::MagicValue value) { magic = value; }
+  void set_filename(String value) { filename = value; }
+};
+
+// A directory packed as a nested archive
+class RMHGDirDescriptor : public RMHGFileDescriptor {
+  GDCLASS(RMHGDirDescriptor, RMHGFileDescriptor)
+ private:
+  Array contents;  // File or dir descriptors
+
+ protected:
+  static void _bind_methods() {
+    godot::ClassDB::bind_method(godot::D_METHOD("get_contents"),
+                                &godot::RMHGDirDescriptor::get_contents);
+  }
+
+ public:
+ String _to_string() {
+    auto str = RMHGFileDescriptor::_to_string();
+    str += "resources: " + String(std::to_string(contents.size()).c_str()) + " ";
+    return str;
+  };
+  void add_resource(Ref<RMHGFileDescriptor> res) { contents.append(res); }
+  Array get_contents() { return contents.duplicate(); }
+};
+
 /* Grasshopper Manufacture RMGH archive object for Godot
  *
  */
@@ -28,13 +111,13 @@ class RMHG : public Node3D {
   const int32_t magic_const = 1195920722;  // = {'R','M','H','G'}
 
   // File Header
-  //
+  // 20B
   struct RMHGHeader {
-    int8_t magic[4];           // 'RMHG'
-    uint32_t num_resources;    //
-    uint32_t off_attributes;   //
-    uint32_t version;          //
-    uint32_t off_stringtable;  //
+    int8_t magic[4];             // 'RMHG'
+    uint32_t num_resources;      //
+    uint32_t off_resourcetable;  //
+    uint32_t version;            //
+    uint32_t off_stringtable;    //
 
     static RMHGHeader read(std::ifstream& file) {
       RMHGHeader self;
@@ -61,30 +144,19 @@ class RMHG : public Node3D {
   String opened_filepath;         //
   RMHGHeader header;              //
   PackedStringArray stringtable;  //
-  Dictionary hierarchy;           //
+  Ref<RMHGDirDescriptor> root;    //
 
   // --- Methods
 
   void load_stringtable(std::ifstream& file);
   void load_attributes(std::ifstream& file);
+  void load_packed_dir(Ref<RMHGDirDescriptor> dir, std::ifstream& file,
+                       bool stahp = false);
 
  protected:
   static void _bind_methods();
 
  public:
-  class RMHGPackedFileDescriptor : public RefCounted {
-    GDCLASS(RMHGPackedFileDescriptor, RefCounted)
-   private:
-    //
-   protected:
-    static void _bind_methods() {}
-
-   public:
-    String name;
-    GHMFile::MagicValue magic;
-    int offset;
-  };
-
   RMHG() {};
   ~RMHG() {};
 
@@ -96,7 +168,7 @@ class RMHG : public Node3D {
   void open_at_offset(const String& filepath, int file_offset = 0);
   //
   PackedStringArray get_strings();
-  Dictionary get_hierarchy();
+  Ref<RMHGDirDescriptor> get_root();
 };
 
 }  // namespace godot
