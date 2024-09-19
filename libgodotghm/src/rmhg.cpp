@@ -51,7 +51,7 @@ void RMHG::load_stringtable(std::ifstream& file) {
     while (true) {
       char ch;
       file.read((char*)&ch, sizeof(ch));
-      if (true) {  // XOR the string
+      if (header.version > 1040) {  // XOR the string
         ch ^= 0x8D;
       }
       if (ch == 0) {
