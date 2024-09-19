@@ -27,15 +27,18 @@ class GHMFile : public Object {
   GHMFile() {};
   ~GHMFile() {};
 
+  // magic values as little-endian int32 (int64 for strimages)
   enum MagicValue {
     MV_UNKNOWN = -1,
     MV_FLCG = 1195592774,
     MV_GAN2 = 843989319,
-    MV_CGT0 = 810828615,
+    MV_GCT0 = 810828615,
+    MV_GDLG = 1196180551,
     MV_GMF2 = 843468103,
     MV_RMHG = 1195920722,
     MV_RSAR = 1380012882,
     MV_RSTM = 1297371986,
+    MV_SCR0 = 810697555,
     MV_SEST = 1414743379,
     MV_STMD = 1145918547,
     MV_STSD = 1146311763,
@@ -55,8 +58,10 @@ class GHMFile : public Object {
         return MagicValue::MV_FLCG;
       case MV_GAN2:
         return MagicValue::MV_GAN2;
-      case MV_CGT0:
-        return MagicValue::MV_CGT0;
+      case MV_GCT0:
+        return MagicValue::MV_GCT0;
+      case MV_GDLG:
+        return MagicValue::MV_GDLG;
       case MV_GMF2:
         return MagicValue::MV_GMF2;
       case MV_RMHG:
@@ -65,6 +70,8 @@ class GHMFile : public Object {
         return MagicValue::MV_RSAR;
       case MV_RSTM:
         return MagicValue::MV_RSTM;
+      case MV_SCR0:
+        return MagicValue::MV_SCR0;
       case MV_SEST:
         return MagicValue::MV_RSTM;
       case MV_STMD:
@@ -90,6 +97,41 @@ class GHMFile : public Object {
     }
   }
 
+  static MagicValue magic32(int32_t magic) {
+    switch (magic) {
+      case MV_FLCG:
+        return MagicValue::MV_FLCG;
+      case MV_GAN2:
+        return MagicValue::MV_GAN2;
+      case MV_GCT0:
+        return MagicValue::MV_GCT0;
+      case MV_GDLG:
+        return MagicValue::MV_GDLG;
+      case MV_GMF2:
+        return MagicValue::MV_GMF2;
+      case MV_RMHG:
+        return MagicValue::MV_RMHG;
+      case MV_RSAR:
+        return MagicValue::MV_RSAR;
+      case MV_RSTM:
+        return MagicValue::MV_RSTM;
+      case MV_SCR0:
+        return MagicValue::MV_SCR0;
+      case MV_SEST:
+        return MagicValue::MV_RSTM;
+      case MV_STMD:
+        return MagicValue::MV_STMD;
+      case MV_STSD:
+        return MagicValue::MV_STSD;
+      case MV_STRI____:
+        return MagicValue::MV_STRI____;
+      case MV_THP:
+        return MagicValue::MV_THP;
+      default:
+        return MV_UNKNOWN;
+    }
+  }
+
   // Open a file and get a type string.
   static String get_file_type(const String& filepath) {
     const char* path = filepath.utf8().get_data();
@@ -108,8 +150,10 @@ class GHMFile : public Object {
         return String("FLCG");
       case MV_GAN2:
         return String("GAN2");
-      case MV_CGT0:
-        return String("CGT0");
+      case MV_GCT0:
+        return String("GCT0");
+      case MV_GDLG:
+        return String("GDLG");
       case MV_GMF2:
         return String("GMF2");
       case MV_RMHG:
@@ -118,6 +162,8 @@ class GHMFile : public Object {
         return String("RSAR");
       case MV_RSTM:
         return String("RSTM");
+      case MV_SCR0:
+        return String("SCR0");
       case MV_SEST:
         return String("RSTM");
       case MV_STMD:
@@ -131,7 +177,7 @@ class GHMFile : public Object {
       case MV_THP:
         return String("THP");
       default:
-        return String("");
+        return String("unknown format!");
     }
   }
 };
