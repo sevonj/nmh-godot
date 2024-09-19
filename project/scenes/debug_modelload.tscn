@@ -1,45 +1,83 @@
-[gd_scene load_steps=6 format=3 uid="uid://dhnoeivicklod"]
+[gd_scene load_steps=5 format=3 uid="uid://dhnoeivicklod"]
 
 [ext_resource type="Script" path="res://classes/dragdrop.gd" id="1_q4bld"]
-[ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="2_vqvqo"]
+[ext_resource type="PackedScene" uid="uid://c7i04qi1j70bq" path="res://scenes/viewer/viewport_archive.tscn" id="3_60sro"]
 [ext_resource type="Theme" uid="uid://ibxsykxvwtee" path="res://ui/theme_default.tres" id="3_kqa80"]
-[ext_resource type="Material" uid="uid://r3ld28yds767" path="res://assets/materials/mat_wireframe.tres" id="3_p6tuc"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a1g8l"]
-bg_color = Color(0, 0, 0, 0.498039)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k55hy"]
+bg_color = Color(0.196078, 0.196078, 0.196078, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.27451, 0.439216, 0.439216, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
 
-[node name="Node3D" type="Node3D"]
+[node name="main" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_kqa80")
 script = ExtResource("1_q4bld")
 
-[node name="env" type="Node3D" parent="."]
+[node name="bg_color" type="ColorRect" parent="."]
+layout_mode = 2
+color = Color(0.197937, 0.197937, 0.197937, 1)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="env"]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
-shadow_enabled = true
+[node name="hsplit" type="HSplitContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 0
+split_offset = 256
 
-[node name="Camera3D" type="Node3D" parent="."]
-script = ExtResource("2_vqvqo")
-
-[node name="CSGBox3D" type="CSGBox3D" parent="."]
-material = ExtResource("3_p6tuc")
-
-[node name="CSGSphere3D" type="CSGSphere3D" parent="CSGBox3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.192072, 0)
-material = ExtResource("3_p6tuc")
-
-[node name="Control" type="PanelContainer" parent="."]
-offset_right = 248.0
-offset_bottom = 18.0
-theme = ExtResource("3_kqa80")
-theme_override_styles/panel = SubResource("StyleBoxFlat_a1g8l")
-
-[node name="vbox" type="VBoxContainer" parent="Control"]
+[node name="sidebar" type="PanelContainer" parent="hsplit"]
+custom_minimum_size = Vector2(32, 0)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Control/vbox"]
+[node name="sidebar_cont" type="VBoxContainer" parent="hsplit/sidebar"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="hsplit/sidebar/sidebar_cont"]
+visible = false
 layout_mode = 2
 text = "Drop GMF2 and FLCG files to this window."
 
-[node name="Label2" type="Label" parent="Control/vbox"]
+[node name="Label2" type="Label" parent="hsplit/sidebar/sidebar_cont"]
+visible = false
 layout_mode = 2
 text = "Press P to enter Santa Destroy."
+
+[node name="viewport_panel" type="PanelContainer" parent="hsplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_k55hy")
+
+[node name="label_instructions" type="Label" parent="hsplit/viewport_panel"]
+layout_mode = 2
+text = "Drop files here to open them.
+
+Supported formats:
+- FLCG (.gcl)
+- GMF2 (.gm2)
+- RMHG (.rsl)
+
+No format is fully supported.
+Some files will crash the program.
+
+Press P to enter Santa Destroy (NMH1)."
+horizontal_alignment = 1
+
+[node name="viewport_cont" type="MarginContainer" parent="hsplit/viewport_panel"]
+layout_mode = 2
+
+[node name="viewport_archive" parent="hsplit/viewport_panel/viewport_cont" instance=ExtResource("3_60sro")]
+visible = false
+layout_mode = 2
+
+[node name="viewport_ovl" type="Control" parent="hsplit/viewport_panel"]
+layout_mode = 2
+mouse_filter = 2

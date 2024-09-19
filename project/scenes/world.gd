@@ -72,7 +72,7 @@ func _load_world() -> void:
 	for chunkname in _chunklist:
 		var filepath := "gamedata/STG_HI/" + chunkname
 		var globalpath := basepath + filepath
-		#	globalpath = basepath + "nmh/" + filepath
+		# globalpath = basepath + "nmh-godot/" + filepath
 
 		if not FileAccess.file_exists(globalpath + ".GM2"):
 			_on_load_fail(globalpath + ".GM2")

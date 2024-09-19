@@ -1,0 +1,39 @@
+[gd_scene load_steps=4 format=3 uid="uid://cot7ikwktgvdn"]
+
+[ext_resource type="Script" path="res://classes/viewport_3d.gd" id="1_btngs"]
+[ext_resource type="Script" path="res://classes/camera_rig_orbital.gd" id="2_qeiwp"]
+[ext_resource type="Material" uid="uid://r3ld28yds767" path="res://assets/materials/mat_wireframe.tres" id="3_0om2l"]
+
+[node name="viewport_3d" type="SubViewportContainer"]
+stretch = true
+script = ExtResource("1_btngs")
+
+[node name="subviewport" type="SubViewport" parent="."]
+own_world_3d = true
+handle_input_locally = false
+size = Vector2i(2, 2)
+render_target_update_mode = 4
+
+[node name="3d_root" type="Node3D" parent="subviewport"]
+
+[node name="env" type="Node3D" parent="subviewport/3d_root"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="subviewport/3d_root/env"]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="entities" type="Node3D" parent="subviewport/3d_root"]
+
+[node name="Camera3D" type="Node3D" parent="subviewport/3d_root/entities"]
+script = ExtResource("2_qeiwp")
+
+[node name="static" type="Node3D" parent="subviewport/3d_root"]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="subviewport/3d_root/static"]
+material = ExtResource("3_0om2l")
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="subviewport/3d_root/static/CSGBox3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.192072, 0)
+material = ExtResource("3_0om2l")
+
+[node name="loaded_content_container" type="Node3D" parent="subviewport/3d_root"]
