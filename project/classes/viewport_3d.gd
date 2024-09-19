@@ -1,7 +1,6 @@
 class_name Viewport3D
 extends SubViewportContainer
 
-@onready var _3d_root := $"subviewport/3d_root"
 @onready var _3d_content_cont := $"subviewport/3d_root/loaded_content_container"
 
 # Called when the node enters the scene tree for the first time.
@@ -10,7 +9,7 @@ func _ready() -> void:
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	pass
 
 func clear() -> void:

@@ -18,7 +18,7 @@ func _ready() -> void:
 	item_selected.connect(_on_tree_item_selected)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	pass
 
 # --- Public --- #
