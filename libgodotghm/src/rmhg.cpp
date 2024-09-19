@@ -91,12 +91,13 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
   file.seekg(parent->get_offset() + dir_header.off_resourcetable,
              std::ios::beg);
 
+  /*
   UtilityFunctions::print(" Name: ", parent->get_name(),
                           " Offset: ", parent->get_offset());
   UtilityFunctions::print(" num_res: ", dir_header.num_resources,
                           " off_res: ", dir_header.off_resourcetable,
                           " off_str: ", dir_header.off_stringtable);
-
+  */
   // Sanity check: Subdir shared stringtable
   if (parent->get_offset() != 0 && dir_header.off_stringtable != 0) {
     UtilityFunctions::push_error("Subdir has its own stringtable?!");
@@ -108,7 +109,7 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
     int32_t len_resource;  //
     int32_t is_dir;        //
     int32_t res_version;   //
-    int32_t str_idx;       // Directory name in string table
+    uint32_t str_idx;      // Directory name in string table
     file.read(reinterpret_cast<char*>(&off_resource), sizeof(int32_t));
     off_resource += parent->get_offset();
     file.read(reinterpret_cast<char*>(&len_resource), sizeof(int32_t));
@@ -143,7 +144,7 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
                                      "/", header.version);
     }
     // Sanity check: string index
-    if (!(0 <= str_idx < stringtable.size())) {
+    if (str_idx >= stringtable.size()) {
       UtilityFunctions::push_error("String table index out of range!");
       fail = true;
     }
@@ -160,24 +161,14 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
       resource->set_version(res_version);
       resource->set_magic(GHMFile::MV_UNKNOWN);
       String filename = "ERROR ";
-      resource->set_filename((0 <= str_idx && str_idx < stringtable.size())
+      resource->set_filename((str_idx < stringtable.size())
                                  ? stringtable[str_idx] + " [ERROR]"
                                  : "??? [ERROR]");
       resource->set_error();
       parent->add_resource(resource);
       continue;
-      if (0 <= str_idx < stringtable.size()) {
-        UtilityFunctions::print("str_idx: ", str_idx, " - ",
-                                stringtable[str_idx]);
-      }
-      UtilityFunctions::print("off: ", off_resource);
-      UtilityFunctions::print("len: ", off_resource);
-      UtilityFunctions::print("dir: ", is_dir);
-      UtilityFunctions::print("ver: ", res_version);
-      UtilityFunctions::print("str_idx: ", str_idx);
-      UtilityFunctions::print("");
-      return;
     }
+
     // We do some seeking for magic and recursion, but we're also looping
     // resources here
     auto stream_position = file.tellg();
@@ -186,12 +177,8 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
     auto res_magic = GHMFile::get_magic(file);
     file.seekg(stream_position, std::ios::beg);
 
-    if (str_idx < stringtable.size()) {
-      UtilityFunctions::print("str_idx: ", str_idx, " - ",
-                              stringtable[str_idx]);
-    } else {
-      UtilityFunctions::print("str_idx: ", str_idx);
-    }
+    String filename =
+        (str_idx < stringtable.size()) ? stringtable[str_idx] : "???";
 
     if (is_dir == 0) {
       Ref<RMHGFileDescriptor> resource;
@@ -202,7 +189,7 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
       resource->set_dir(is_dir);
       resource->set_version(res_version);
       resource->set_magic(res_magic);
-      resource->set_filename(stringtable[str_idx]);
+      resource->set_filename(filename);
       parent->add_resource(resource);
     } else {
       // Sanity check: Magic
@@ -219,7 +206,7 @@ void RMHG::load_packed_dir(Ref<RMHGDirDescriptor> parent, std::ifstream& file) {
       subdir->set_dir(is_dir);
       subdir->set_version(res_version);
       subdir->set_magic(res_magic);
-      subdir->set_filename(stringtable[str_idx]);
+      subdir->set_filename(filename);
       parent->add_resource(subdir);
       load_packed_dir(subdir, file);
       file.seekg(stream_position, std::ios::beg);
@@ -254,16 +241,11 @@ void RMHG::open_at_offset(const String& filepath, int file_offset) {
 
   header = RMHGHeader::read(file);
 
-  UtilityFunctions::print("num_res: ", header.num_resources);
-  UtilityFunctions::print("off_att: ", header.off_resourcetable);
-  UtilityFunctions::print("off_str: ", header.off_stringtable);
-
   if (file_offset != 0) {
     return;
   }
 
   load_stringtable(file);
-  UtilityFunctions::print("stringtable: ", stringtable);
   load_attributes(file);
 
   file.close();
