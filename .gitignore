@@ -1,5 +1,7 @@
 # Copytighted files
 gamedata/
+gamedata_nmh/
+gamedata_nmh2/
 # Build
 build/
 *.so
