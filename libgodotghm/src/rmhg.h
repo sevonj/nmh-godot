@@ -20,16 +20,17 @@ namespace godot {
 class RMHGFileDescriptor : public RefCounted {
   GDCLASS(RMHGFileDescriptor, RefCounted)
  private:
-  String filepath;        // Path of the root archive
-  uint32_t off_resource;  // Offset in the root archive
-  uint32_t len_resource;  // Data size
-  int32_t dir_flag;          //
-  int32_t version;        //
-  // int32_t str_idx;            //
+  //
+ protected:
+  String filepath;            // Path of the root archive
+  uint32_t off_resource;      // Offset in the root archive
+  uint32_t len_resource;      // Data size
+  int32_t dir_flag;           //
+  int32_t version;            //
   GHMFile::MagicValue magic;  //
   String filename;            //
+  bool fail = false;          //
 
- protected:
   static void _bind_methods() {
     godot::ClassDB::bind_method(godot::D_METHOD("_to_string()"),
                                 &godot::RMHGFileDescriptor::_to_string);
@@ -47,10 +48,13 @@ class RMHGFileDescriptor : public RefCounted {
                                 &godot::RMHGFileDescriptor::get_type);
     godot::ClassDB::bind_method(godot::D_METHOD("get_name"),
                                 &godot::RMHGFileDescriptor::get_name);
+
+    godot::ClassDB::bind_method(godot::D_METHOD("is_error"),
+                                &godot::RMHGFileDescriptor::is_error);
   }
 
  public:
-  String get_filepath() { return filepath; }             // Archive path
+  String get_filepath() { return filepath; }                     // Archive path
   uint32_t get_offset() { return off_resource; }                 //
   uint32_t get_size() { return len_resource; }                   //
   uint32_t is_dir() { return dir_flag; }                         //
@@ -75,12 +79,16 @@ class RMHGFileDescriptor : public RefCounted {
   void set_version(int32_t value) { version = value; }
   void set_magic(GHMFile::MagicValue value) { magic = value; }
   void set_filename(String value) { filename = value; }
+
+  void set_error() { fail = true; }
+  bool is_error() { return fail; }
 };
 
 // A directory packed as a nested archive
 class RMHGDirDescriptor : public RMHGFileDescriptor {
   GDCLASS(RMHGDirDescriptor, RMHGFileDescriptor)
  private:
+  int num_resources = -1;
   Array contents;  // File or dir descriptors
 
  protected:
@@ -90,11 +98,15 @@ class RMHGDirDescriptor : public RMHGFileDescriptor {
   }
 
  public:
- String _to_string() {
+  String _to_string() {
     auto str = RMHGFileDescriptor::_to_string();
-    str += "resources: " + String(std::to_string(contents.size()).c_str()) + " ";
+    str += "resources: " + String(std::to_string(num_resources).c_str()) + " ";
+    if (fail) {
+      str += "ERROR! ";
+    }
     return str;
   };
+  void set_num_res(int value) { num_resources = value; }
   void add_resource(Ref<RMHGFileDescriptor> res) { contents.append(res); }
   Array get_contents() { return contents.duplicate(); }
 };
@@ -150,8 +162,7 @@ class RMHG : public Node3D {
 
   void load_stringtable(std::ifstream& file);
   void load_attributes(std::ifstream& file);
-  void load_packed_dir(Ref<RMHGDirDescriptor> dir, std::ifstream& file,
-                       bool stahp = false);
+  void load_packed_dir(Ref<RMHGDirDescriptor> dir, std::ifstream& file);
 
  protected:
   static void _bind_methods();

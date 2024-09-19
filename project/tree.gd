@@ -44,6 +44,8 @@ func _load_dir(dir: RMHGDirDescriptor, tree_parent: TreeItem) -> void:
 			_load_dir(resource, tree_child)
 		else:
 			tree_child.set_text(0, resource.get_name())
+		if resource.is_error():
+			tree_child.set_custom_color(0, Color.RED)
 
 # --- Private --- #
 
