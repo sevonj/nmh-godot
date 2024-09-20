@@ -14,9 +14,13 @@ using namespace godot;  // namespace godot
 void GMF2::_bind_methods() {
   godot::ClassDB::bind_method(godot::D_METHOD("open", "path"),
                               &godot::GMF2::open);
+  godot::ClassDB::bind_method(godot::D_METHOD("open_at_offset", "path", "file_offset"),
+                              &godot::GMF2::open_at_offset);
 }
 
-void GMF2::open(const String& filepath) {
+void GMF2::open(const String& filepath) { open_at_offset(filepath, 0); }
+
+void GMF2::open_at_offset(const String& filepath, int file_offset) {
   UtilityFunctions::print("Opening ", filepath, " as GMF2.");
   const char* path = filepath.utf8().get_data();
 
@@ -26,6 +30,9 @@ void GMF2::open(const String& filepath) {
     UtilityFunctions::push_error("Unable to open.");
     return;
   }
+
+  file.seekg(file_offset, std::ios::beg);
+  stream_begin = file.tellg();
 
   // Check magic and version
   int32_t magic;
@@ -41,9 +48,9 @@ void GMF2::open(const String& filepath) {
     return;
   }
 
-  file.seekg(0, std::ios::beg);
+  file.seekg(stream_begin, std::ios::beg);
   file.read(reinterpret_cast<char*>(&header), sizeof(GMF2Header));
-  /*
+  //*
   UtilityFunctions::print("File contents:");
   UtilityFunctions::print("Objects:   ", header.num_objects);
   UtilityFunctions::print("Textures:  ", header.num_textures);
@@ -52,7 +59,10 @@ void GMF2::open(const String& filepath) {
   UtilityFunctions::print(" ");
   UtilityFunctions::print("unk_0x30: ", header.unk_0x30);
   UtilityFunctions::print("unk_0x34: ", header.unk_0x34);
-  */
+  // */
+  //if (file_offset != 0) {
+  //  return;
+  //}
   load_objects(this, file, header.off_objects);
 
   file.close();
@@ -63,7 +73,7 @@ void GMF2::load_objects(Node3D* parent, std::ifstream& file, int offset) {
   // Loop though linked list
   int32_t off_next = offset;
   while (off_next != 0) {
-    file.seekg(off_next, std::ios::beg);
+    file.seekg(stream_begin + off_next, std::ios::beg);
     GMF2Object obj = GMF2Object::read(file);
 
     // Node creation
@@ -100,7 +110,7 @@ Ref<ArrayMesh> GMF2::load_object_geometry(std::ifstream& file,
   // Loop though linked list
   int32_t off_next = obj.off_surfaces;
   while (off_next != 0) {
-    file.seekg(off_next, std::ios::beg);
+    file.seekg(stream_begin + off_next, std::ios::beg);
 
     st->begin(Mesh::PRIMITIVE_TRIANGLES);
 
@@ -109,7 +119,7 @@ Ref<ArrayMesh> GMF2::load_object_geometry(std::ifstream& file,
 
     // GMF Surface data
     // NOTICE: Big-Endian
-    file.seekg(surf.off_data, std::ios::beg);
+    file.seekg(stream_begin + surf.off_data, std::ios::beg);
     uint32_t len_data;
     uint16_t num_vertices;
     int16_t unknown;
@@ -256,7 +266,7 @@ Vector3 GMF2::read_v_pos(int divisor, std::ifstream& file, int off_buf,
 
   // No v scale divisor means it's float. Otherwise it's short.
   if (divisor == -1) {
-    file.seekg(off_buf + (idx * 3 * 4), std::ios::beg);
+    file.seekg(stream_begin + off_buf + (idx * 3 * 4), std::ios::beg);
 
     float x;
     float y;
@@ -271,7 +281,7 @@ Vector3 GMF2::read_v_pos(int divisor, std::ifstream& file, int off_buf,
     v_pos = Vector3(x, y, z);
 
   } else {
-    file.seekg(off_buf + (idx * 3 * 2), std::ios::beg);
+    file.seekg(stream_begin + off_buf + (idx * 3 * 2), std::ios::beg);
 
     int16_t x;
     int16_t y;

@@ -134,23 +134,24 @@ class GMF2 : public Node3D {
     Color col;
     Vector2 uv;
   };
-  // ---
 
+  // ---
+  std::streamoff stream_begin;  // Not 0 if file is packed into an archive
   GMF2Header header;
 
   // Recursively loads objects and their children from stream, and adds them to
   // the tree.
   void load_objects(Node3D* parent, std::ifstream& file, int offset);
-  static Ref<ArrayMesh> load_object_geometry(std::ifstream& file,
+  Ref<ArrayMesh> load_object_geometry(std::ifstream& file,
                                              GMF2Object& obj);
 
-  static Vertex read_vertex_b(std::ifstream& file, int v_divisor,
+  Vertex read_vertex_b(std::ifstream& file, int v_divisor,
                               int off_v_buf);
 
-  static Vertex read_vertex_a(std::ifstream& file, int v_divisor,
+  Vertex read_vertex_a(std::ifstream& file, int v_divisor,
                               int off_v_buf);
 
-  static Vector3 read_v_pos(int vertex_coord_type, std::ifstream& file,
+  Vector3 read_v_pos(int vertex_coord_type, std::ifstream& file,
                             int off_v_buf, uint16_t idx);
 
  protected:
@@ -161,6 +162,7 @@ class GMF2 : public Node3D {
   ~GMF2() {};
 
   void open(const String& filepath);
+  void open_at_offset(const String& filepath, int offset);
 };
 
 }  // namespace godot

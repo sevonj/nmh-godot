@@ -83,16 +83,18 @@ func on_files_dropped(files: Array[String]):
 				pass
 
 func _clear() -> void:
-	# Clear Viewport
+	_clear_viewport()
+
+	# Clear Sidebar
+	for child in _sidebar_cont.get_children():
+		child.queue_free()
+
+func _clear_viewport() -> void:
 	_viewport_3d = null
 	_viewport_arc = null
 	if is_instance_valid(_viewport_label):
 		_viewport_label.free()
 	for child in _viewport_cont.get_children():
-		child.queue_free()
-
-	# Clear Sidebar
-	for child in _sidebar_cont.get_children():
 		child.queue_free()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -101,7 +103,20 @@ func _process(_delta: float) -> void:
 		get_tree().change_scene_to_file("res://scenes/world.tscn")
 
 func _on_archive_file_selected(res: RMHGFileDescriptor) -> void:
+	match res.get_type():
+		"GMF2":
+			_clear_viewport()
+			_create_viewport_3d()
+			var model := GMF2.new()
+			model.open_at_offset(res.get_filepath(), res.get_offset())
+			_viewport_3d.add_model(model)
+		_:
+			_clear_viewport()
+			_create_viewport_arc()
+
 	_set_viewport_message(res.to_string())
+
+
 
 func _set_viewport_message(msg: String) -> void:
 	if is_instance_valid(_viewport_label):
