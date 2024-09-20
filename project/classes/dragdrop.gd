@@ -114,7 +114,7 @@ func _set_viewport_message(msg: String) -> void:
 func _create_viewport_3d() -> void:
 	if is_instance_valid(_viewport_3d):
 		return
-	_viewport_3d = load("res://scenes/viewer/viewport_3d.tscn").instantiate()
+	_viewport_3d = Viewport3D.new()
 	_viewport_cont.add_child(_viewport_3d)
 
 # Create viewport *if it doesn't exist*

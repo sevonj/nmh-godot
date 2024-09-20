@@ -1,7 +1,6 @@
 class_name CameraRigOrbital
-extends Node3D
+extends CameraRigBase
 
-var _camera := Camera3D.new()
 var _distance := 5.
 var _mouse_lock := false:
 	set(value):
@@ -49,8 +48,6 @@ func _input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.is_pressed():
 			_distance *= 1. / .8
 			return
-
-
 
 func _update_rig() -> void:
 	rotation.x -= mouse_delta.y * .01

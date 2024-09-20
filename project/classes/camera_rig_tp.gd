@@ -1,5 +1,6 @@
 ## Third person camera controller.
-class_name CameraRigTP extends Node3D
+class_name CameraRigTP
+extends CameraRigBase
 
 const _PROFILE_PATH = "res://config/cameraprofile/"
 const _PROFILE_VER = "1"
@@ -29,8 +30,6 @@ var _camera_offset := Vector3.ZERO
 
 # Children
 @onready var _pivot := Node3D.new()
-@onready var _camera := Camera3D.new()
-
 
 # --- Virtual Methods --- #
 func _init():
