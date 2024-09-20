@@ -13,6 +13,7 @@ Demo that loads NMH assets into Godot game engine.
 Go to [releases](https://github.com/sevonj/nmh-godot/releases) to download
 
 # Building
+Godot version: 4.3  
 Build the C++ source using scons.
 1. run `scons` at repository root. The binary should appear at `project/bin`.
 2. Export godot project like normal.
