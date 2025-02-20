@@ -6,8 +6,7 @@ extends Node
 @onready var _viewport_cont = _viewport_panel.get_node("viewport_cont")
 @onready var _viewport_ovl = _viewport_panel.get_node("viewport_ovl")
 
-var _viewport_3d: Viewport3D
-var _viewport_arc: Control
+var _viewport: Control
 
 var _viewport_label: Label
 
@@ -34,7 +33,7 @@ func on_files_dropped(files: Array[String]):
 				var flcg := FLCG.new()
 				flcg.open(file)
 				_create_viewport_3d()
-				_viewport_3d.add_model(flcg)
+				_viewport.add_model(flcg)
 			"GAN2":
 				pass
 			"GCT0":
@@ -43,7 +42,7 @@ func on_files_dropped(files: Array[String]):
 				var gmf2 := GMF2.new()
 				gmf2.open(file)
 				_create_viewport_3d()
-				_viewport_3d.add_model(gmf2)
+				_viewport.add_model(gmf2)
 			"RMHG":
 				var rmhg := RMHG.new()
 				rmhg.open(file)
@@ -90,8 +89,7 @@ func _clear() -> void:
 		child.queue_free()
 
 func _clear_viewport() -> void:
-	_viewport_3d = null
-	_viewport_arc = null
+	_viewport = null
 	if is_instance_valid(_viewport_label):
 		_viewport_label.free()
 	for child in _viewport_cont.get_children():
@@ -103,15 +101,25 @@ func _process(_delta: float) -> void:
 		get_tree().change_scene_to_file("res://scenes/world.tscn")
 
 func _on_archive_file_selected(res: RMHGFileDescriptor) -> void:
+	_clear_viewport()
 	match res.get_type():
 		"GMF2":
-			_clear_viewport()
 			_create_viewport_3d()
 			var model := GMF2.new()
 			model.open_at_offset(res.get_filepath(), res.get_offset())
-			_viewport_3d.add_model(model)
+			_viewport.add_model(model)
+
+		"RMHG":
+			# if res is RMHGDirDescriptor:
+			_create_viewport_arc()
+			# else:
+			# _create_viewport_packed_arc()
+			# var rmhg = RMHG.new()
+			# rmhg.open_at_offset(res.get_filepath(), res.get_offset())
+			# _viewport.load_rmhg(rmhg)
+
+
 		_:
-			_clear_viewport()
 			_create_viewport_arc()
 
 	_set_viewport_message(res.to_string())
@@ -127,14 +135,17 @@ func _set_viewport_message(msg: String) -> void:
 
 # Create 3d viewport *if it doesn't exist*
 func _create_viewport_3d() -> void:
-	if is_instance_valid(_viewport_3d):
+	if _viewport is Viewport3D and is_instance_valid(_viewport):
 		return
-	_viewport_3d = Viewport3D.new()
-	_viewport_cont.add_child(_viewport_3d)
+	_viewport = Viewport3D.new()
+	_viewport_cont.add_child(_viewport)
 
 # Create viewport *if it doesn't exist*
 func _create_viewport_arc() -> void:
-	if is_instance_valid(_viewport_arc):
-		return
-	_viewport_arc = load("res://scenes/viewer/viewport_archive.tscn").instantiate()
-	_viewport_cont.add_child(_viewport_arc)
+	_viewport = load("res://scenes/viewer/viewport_archive.tscn").instantiate()
+	_viewport_cont.add_child(_viewport)
+
+# Create viewport *if it doesn't exist*
+func _create_viewport_packed_arc() -> void:
+	_viewport = ViewportPackedArc.new()
+	_viewport_cont.add_child(_viewport)

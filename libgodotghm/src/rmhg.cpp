@@ -241,10 +241,6 @@ void RMHG::open_at_offset(const String& filepath, int file_offset) {
 
   header = RMHGHeader::read(file);
 
-  if (file_offset != 0) {
-    return;
-  }
-
   load_stringtable(file);
   load_attributes(file);
 
