@@ -180,6 +180,8 @@ class RMHG : public Node3D {
   //
   PackedStringArray get_strings();
   Ref<RMHGDirDescriptor> get_root();
+
+  void extract_data(uint32_t off, uint32_t len, const String& out_filepath);
 };
 
 }  // namespace godot

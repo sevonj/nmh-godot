@@ -22,6 +22,10 @@ void RMHG::_bind_methods() {
 
   godot::ClassDB::bind_method(godot::D_METHOD("get_file_path"),
                               &godot::RMHG::get_file_path);
+
+  godot::ClassDB::bind_method(
+      godot::D_METHOD("extract_data", "off", "len", "out_filepath"),
+      &godot::RMHG::extract_data);
 }
 
 void RMHG::load_stringtable(std::ifstream& file) {
@@ -253,3 +257,29 @@ void RMHG::open_at_offset(const String& filepath, int file_offset) {
 PackedStringArray godot::RMHG::get_strings() { return stringtable.duplicate(); }
 
 Ref<RMHGDirDescriptor> godot::RMHG::get_root() { return root; }
+
+void RMHG::extract_data(uint32_t off, uint32_t len, const String& out_filepath) {
+  UtilityFunctions::print("Extracting data to ", out_filepath);
+
+  const char* arc_path = opened_filepath.utf8().get_data();
+  std::ifstream arc_file(arc_path, std::ios::binary);
+  if (!arc_file) {
+    UtilityFunctions::push_error("Unable to open archive file.");
+    return;
+  }
+
+  const char* out_path = out_filepath.utf8().get_data();
+  std::ofstream out_file(out_path, std::ios::binary);
+  if (!out_file) {
+    UtilityFunctions::push_error("Unable to open out file.");
+    return;
+  }
+
+  arc_file.seekg(off, std::ios::beg);
+  {
+    std::vector<char> buffer( len );
+    arc_file.read( buffer.data(), buffer.size() );
+    out_file.write( buffer.data(), buffer.size() ); 
+  }
+  UtilityFunctions::print("Extraction done");
+}

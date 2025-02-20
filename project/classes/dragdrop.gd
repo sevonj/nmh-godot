@@ -6,9 +6,12 @@ extends Node
 @onready var _viewport_cont: Container = _viewport_panel.get_node("viewport_cont")
 @onready var _viewport_ovl: Control = _viewport_panel.get_node("viewport_ovl")
 
-var _viewport: Control
+var _selected_file: RMHGFileDescriptor
 
+var _viewport: Control
 var _viewport_label: Label
+var _export_button: Button
+var _archive_tree: RMHGTree
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -18,9 +21,15 @@ func on_files_dropped(files: Array[String]) -> void:
 	_clear()
 
 	var close_button := Button.new()
-	close_button.text = "close"
+	close_button.text = "Close archive"
 	close_button.pressed.connect(_clear)
 	_sidebar_cont.add_child(close_button)
+	
+	_export_button = Button.new()
+	_export_button.text = "Extract selected file"
+	_export_button.pressed.connect(_export_selected)
+	_export_button.disabled = true
+	_sidebar_cont.add_child(_export_button)
 
 	for file in files:
 		var magic := GHMFile.get_file_type(file)
@@ -58,10 +67,10 @@ func on_files_dropped(files: Array[String]) -> void:
 				#title_cont.add_child(title)
 
 				# Create tree
-				var archive_tree := RMHGTree.new()
-				archive_tree.load_rmhg(rmhg)
-				_sidebar_cont.add_child(archive_tree)
-				archive_tree.sig_res_selected.connect(_on_archive_file_selected)
+				_archive_tree = RMHGTree.new()
+				_archive_tree.load_rmhg(rmhg)
+				_sidebar_cont.add_child(_archive_tree)
+				_archive_tree.sig_res_selected.connect(_on_archive_file_selected)
 			"RSAR":
 				pass
 			"RSTM":
@@ -102,6 +111,9 @@ func _process(_delta: float) -> void:
 
 func _on_archive_file_selected(res: RMHGFileDescriptor) -> void:
 	_clear_viewport()
+	_export_button.disabled = res.is_dir()
+	_selected_file = res
+	
 	match res.get_type():
 		"GMF2":
 			_create_viewport_3d()
@@ -118,12 +130,38 @@ func _on_archive_file_selected(res: RMHGFileDescriptor) -> void:
 			# rmhg.open_at_offset(res.get_filepath(), res.get_offset())
 			# _viewport.load_rmhg(rmhg)
 
-
 		_:
 			_create_viewport_arc()
 
 	_set_viewport_message(res.to_string())
 
+
+func _export_selected() -> void:
+	if !is_instance_valid(self._selected_file):
+		push_error("Attempted to export null")
+		return
+	
+	if self._selected_file.is_dir():
+		push_error("Attempted to export a dir")
+		return
+	
+	if !is_instance_valid(self._archive_tree):
+		push_error("_archive_tree is invalid")
+		return
+	var rmhg := self._archive_tree.rmhg
+	if !is_instance_valid(rmhg):
+		push_error("_archive_tree.rmhg is invalid")
+		return
+		
+	var out_dir := rmhg.get_file_path().get_base_dir().path_join("extracted")
+	var out_path := out_dir.path_join(self._selected_file.get_name())
+	DirAccess.make_dir_absolute(out_dir)
+	rmhg.extract_data(
+		self._selected_file.get_offset(),
+		self._selected_file.get_size(),
+		out_path
+	)
+	
 
 
 func _set_viewport_message(msg: String) -> void:
