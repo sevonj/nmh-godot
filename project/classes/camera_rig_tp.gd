@@ -32,23 +32,23 @@ var _camera_offset := Vector3.ZERO
 @onready var _pivot := Node3D.new()
 
 # --- Virtual Methods --- #
-func _init():
+func _init() -> void:
 	name = "camera_rig_tp"
 	_profile = CameraProfile.new()  # in case nothing gets loaded
 
 
-func _ready():
+func _ready() -> void:
 	_setup_camera_arm()
 	# _save_profile(CameraProfile.new(), "latest")
 
 
-func _process(delta):
+func _process(delta: float) -> void:
 	_profile_time += delta
 	_update_profile_params()
 	_update_camera_arm()
 
 
-func _input(event):
+func _input(event: InputEvent) -> void:
 	if !enable_input:
 		return
 
@@ -75,12 +75,12 @@ func get_camera_rotation() -> Vector3:
 ## Set default camera profile by name.
 func load_profile(profilename: String) -> void:
 	print("set profile called with: ", profilename)
-	var json = _get_profile_json(profilename)
+	var json := _get_profile_json(profilename)
 	_profile = _json_to_profile(json)
 
 
 func set_profile_override(profilename: String) -> void:
-	var json = _get_profile_json(profilename)
+	var json := _get_profile_json(profilename)
 	_profile_override = _json_to_profile(json)
 	_profile_returning = false
 	_profile_time = 0.
@@ -99,7 +99,7 @@ func raycast_aim(mask := _DEFAULT_RAYAIM_MASK, distance: float = 4096) -> Dictio
 	var origin := _camera.project_ray_origin(mousepos)
 	var end := origin + _camera.project_ray_normal(mousepos) * distance
 	var query := PhysicsRayQueryParameters3D.create(origin, end, mask)
-	var result = get_world_3d().direct_space_state.intersect_ray(query)
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if !result.has("position"):
 		result.position = end
 	return result
@@ -152,7 +152,7 @@ func raycast_aim(mask := _DEFAULT_RAYAIM_MASK, distance: float = 4096) -> Dictio
 
 
 ## Updates variables based on profile & profile override.
-func _update_profile_params():
+func _update_profile_params() -> void:
 	if _profile == null:
 		return
 
@@ -177,7 +177,7 @@ func _update_profile_params():
 	_camera_offset = _profile.offset.lerp(_profile_override.offset, t)
 
 
-func _setup_camera_arm():
+func _setup_camera_arm() -> void:
 	_pivot.name = "pivot"
 	_camera.name = "camera"
 	add_child(_pivot)
@@ -185,7 +185,7 @@ func _setup_camera_arm():
 	_camera.current = true  # This may or may not be the wanted behaviour.
 
 
-func _update_camera_arm():
+func _update_camera_arm() -> void:
 	if is_instance_valid(target):
 		var off := transform.basis * _camera_offset
 		global_position = target.global_position + off
@@ -213,7 +213,7 @@ func _get_profile_json(profilename: String) -> Dictionary:
 		return {}
 
 	var file := FileAccess.open(path, FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
+	var json: Dictionary = JSON.parse_string(file.get_as_text())
 	file.close()
 
 	if json is Dictionary:
@@ -237,14 +237,14 @@ func _json_to_profile(json: Dictionary) -> CameraProfile:
 		)
 		return null
 
-	var profile = dict_to_inst(json)
+	var profile := dict_to_inst(json)
 	# Gotta convert String to Vector3 because dict_to_inst() is shallow.
 	profile.offset = str_to_var("Vector3" + profile.offset)
 	return profile
 
 
-func _save_profile(profile: CameraProfile, profilename: String):
-	var file = FileAccess.open(_PROFILE_PATH + profilename + ".json", FileAccess.WRITE)
+func _save_profile(profile: CameraProfile, profilename: String) -> void:
+	var file := FileAccess.open(_PROFILE_PATH + profilename + ".json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(inst_to_dict(profile)))
 
 

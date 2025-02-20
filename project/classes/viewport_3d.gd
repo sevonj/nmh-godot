@@ -35,8 +35,8 @@ func _process(_delta: float) -> void:
 	_draw_gizmo_line(Vector3.ZERO, Vector3.LEFT, Color.RED)
 	_draw_gizmo_line(Vector3.ZERO, Vector3.FORWARD, Color.BLUE)
 
-func _draw_gizmo_line(start3d: Vector3, end3d: Vector3, color := Color.OLIVE):
-	var camera = _camerarig.get_camera()
+func _draw_gizmo_line(start3d: Vector3, end3d: Vector3, color := Color.OLIVE) -> void:
+	var camera := _camerarig.get_camera()
 	var dist: float = abs(camera.global_position - start3d).length()
 	end3d *= dist * .2
 	if camera.is_position_behind(start3d) or camera.is_position_behind(end3d):

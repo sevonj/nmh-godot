@@ -15,7 +15,7 @@ var _lines: Array[DebugDrawLine] = []
 func _ready() -> void:
 	z_index = 999
 
-func _process(delta):
+func _process(delta: float) -> void:
 	# Remove expired points
 	var points_filtered: Array[DebugDrawPoint] = []
 	for point in _points:
@@ -37,7 +37,7 @@ func _process(delta):
 	queue_redraw()
 
 
-func _draw():
+func _draw() -> void:
 	for line in _lines:
 		draw_line(line.start, line.end, line.color, 1.)
 
@@ -70,7 +70,7 @@ class DebugDrawPoint:
 	var time_left: float
 	var color: Color
 
-	func _init(pos: Vector2, time: float, col: Color):
+	func _init(pos: Vector2, time: float, col: Color) -> void:
 		rect = Rect2(pos + RECT_OFF, RECT_SIZE)
 		time_left = time
 		color = col
@@ -83,7 +83,7 @@ class DebugDrawLine:
 	var time_left: float
 	var color: Color
 
-	func _init(_start: Vector2, _end: Vector2, time: float, col: Color):
+	func _init(_start: Vector2, _end: Vector2, time: float, col: Color) -> void:
 		start = _start
 		end = _end
 		time_left = time

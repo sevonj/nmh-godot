@@ -2,9 +2,9 @@ extends Node
 
 @onready var _sidebar_cont := $hsplit/sidebar/sidebar_cont
 
-@onready var _viewport_panel = $"hsplit/viewport_panel"
-@onready var _viewport_cont = _viewport_panel.get_node("viewport_cont")
-@onready var _viewport_ovl = _viewport_panel.get_node("viewport_ovl")
+@onready var _viewport_panel: Container = $"hsplit/viewport_panel"
+@onready var _viewport_cont: Container = _viewport_panel.get_node("viewport_cont")
+@onready var _viewport_ovl: Control = _viewport_panel.get_node("viewport_ovl")
 
 var _viewport: Control
 
@@ -14,7 +14,7 @@ var _viewport_label: Label
 func _ready() -> void:
 	get_tree().root.get_viewport().files_dropped.connect(on_files_dropped)
 
-func on_files_dropped(files: Array[String]):
+func on_files_dropped(files: Array[String]) -> void:
 	_clear()
 
 	var close_button := Button.new()

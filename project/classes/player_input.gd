@@ -33,7 +33,7 @@ func poll() -> void:
 		_jump_buffer_t = 0.
 
 
-func advance_timers(delta) -> void:
+func advance_timers(delta: float) -> void:
 	if !enabled:
 		return
 

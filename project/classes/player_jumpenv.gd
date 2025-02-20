@@ -50,7 +50,7 @@ var _fall_duration := 1.0  ## Fall: Time to reach terminal velocity from zero
 func get_velocity(time: float) -> float:
 	## Rise
 	if time < t_start_sust:
-		var t = time / _rise_duration
+		var t := time / _rise_duration
 		return _jump_velocity * t
 
 	## Sustain
@@ -60,12 +60,12 @@ func get_velocity(time: float) -> float:
 
 	## Decay
 	if time < t_start_fall:
-		var t = (time - t_start_decay) / _decay_duration
+		var t := (time - t_start_decay) / _decay_duration
 		return lerpf(_jump_velocity, 0, t)
 
 	## Fall
 	if time < t_start_terminal:
-		var t = (time - t_start_fall) / _fall_duration
+		var t := (time - t_start_fall) / _fall_duration
 		return lerpf(0, _terminal_velocity, t)
 
 	## after
@@ -79,6 +79,6 @@ func get_velocity(time: float) -> float:
 ## seamlessly transition from rise/sust to decay.
 func get_decay_t_from_v(v: float) -> float:
 	# t_decay_left tells how much time to spend in decay to undo current velocity.
-	var t_decay_left = (v / _jump_velocity) * _decay_duration
-	var t = t_start_fall - t_decay_left
+	var t_decay_left := (v / _jump_velocity) * _decay_duration
+	var t := t_start_fall - t_decay_left
 	return t

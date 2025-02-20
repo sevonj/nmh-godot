@@ -23,7 +23,7 @@ func _process(_delta: float) -> void:
 
 # --- Public --- #
 
-func load_rmhg(input: RMHG):
+func load_rmhg(input: RMHG) -> void:
 	rmhg = input
 	if !is_instance_valid(rmhg):
 		push_error("Invalid RMHG!")
@@ -36,7 +36,7 @@ func load_rmhg(input: RMHG):
 	_load_dir(archive_root, tree_root)
 
 func _load_dir(dir: RMHGDirDescriptor, tree_parent: TreeItem) -> void:
-	for resource in dir.get_contents():
+	for resource: Variant in dir.get_contents():
 		var tree_child := create_item(tree_parent)
 		tree_child.set_metadata(meta.RES_DESC, resource)
 		if resource is RMHGDirDescriptor:
@@ -49,7 +49,7 @@ func _load_dir(dir: RMHGDirDescriptor, tree_parent: TreeItem) -> void:
 
 # --- Private --- #
 
-func _on_tree_item_selected():
+func _on_tree_item_selected() -> void:
 	var selected := get_selected()
 	var resource: RMHGFileDescriptor = selected.get_metadata(meta.RES_DESC)
 	sig_res_selected.emit(resource)

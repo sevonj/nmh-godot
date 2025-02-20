@@ -59,22 +59,22 @@ var _focus_point: Marker3D
 
 
 # --- Setters --- #
-func _set_max_health(value: float):
+func _set_max_health(value: float) -> void:
 	max_health = clamp(value, 0, INF)
 	health = clamp(health, 0, max_health)
 
 
-func _set_health(value: float):
+func _set_health(value: float) -> void:
 	health = clamp(value, 0, max_health)
 
 
 # --- Setup --- #
-func _init():
+func _init() -> void:
 	pass
 
 
 # Remember to call super() at the end of your _ready().
-func _ready():
+func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	if not is_instance_valid(_coll):
@@ -150,5 +150,5 @@ func knockback(_force: Vector3) -> void:
 
 
 # --- listeners --- "
-func _on_death():
+func _on_death() -> void:
 	queue_free()

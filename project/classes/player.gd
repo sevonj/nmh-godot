@@ -71,20 +71,20 @@ func set_jump_buffer_time(t: float) -> void:
 	_input.jump_buffer_time = t
 
 
-func _set_state(state: ST):
+func _set_state(state: ST) -> void:
 	_state = state
 	_t_state = 0.  # Reset state timer
 
 
 # --- Setup --- #
-func _init():
+func _init() -> void:
 	super()
 	name = "player"
 	camera_target = Marker3D.new()
 	camera_target.name = "camera_target"
 
 
-func _ready():
+func _ready() -> void:
 	super()
 	_coll = get_node_or_null("coll")
 	_mdl = get_node_or_null("mdl")
@@ -105,7 +105,7 @@ func _ready():
 # --- Updates --- #
 
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	_input.poll()
 
 	# Update rotation
@@ -132,7 +132,7 @@ func _process(_delta):
 
 			# Jump Release -> skip to decay if we aren't there yet.
 			if _input.is_jump_released():
-				var new_t = _jumpenv.get_decay_t_from_v(velocity.y)
+				var new_t := _jumpenv.get_decay_t_from_v(velocity.y)
 				_t_jump = max(new_t, _t_jump)
 
 
@@ -142,7 +142,7 @@ func _process(_delta):
 ## An attempt to create sane movement code instead of fisting 5 function calls deep, setting a dozen
 ## status flags back and forth between different nodes on the way to wherever depths of Rube
 ## Goldberg's ass.
-func _physics_process(delta):
+func _physics_process(delta: float) -> void:
 	# All timers are now updated in physics process instead of frame process.
 	_input.advance_timers(delta)
 	_t_state += delta

@@ -88,9 +88,9 @@ func _load_world() -> void:
 		$static.add_child(gmf2)
 		$static.add_child(flcg)
 
-		var flcg_children = flcg.get_children()
+		var flcg_children := flcg.get_children()
 		while not flcg_children.is_empty():
-			var new_children = []
+			var new_children: Array[Node] = []
 			for child in flcg_children:
 				if child is MeshInstance3D:
 					child.material_override = preload("res://assets/materials/mat_wireframe.tres")
